@@ -20,9 +20,6 @@
         /* Mobile Optimizations */
         .mobile-input-bar { background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(30px); border-top: 1px solid rgba(255, 255, 255, 0.1); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
-        
-        @keyframes blob { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } 100% { transform: translate(0,0) scale(1); } }
-        .animate-blob { animation: blob 10s infinite ease-in-out alternate; }
     </style>
 </head>
 <body>
@@ -68,34 +65,55 @@
             );
         };
 
+        // --- 核心修复：增强版图片显示组件 ---
         const ImageDisplay = ({ url, isBase64 }) => {
-            const [error, setError] = useState(false);
-            
-            if (error) return (
-                <div className="bg-red-900/10 border border-red-500/20 rounded-xl p-3 flex flex-col items-center justify-center gap-1 text-red-400 text-xs">
-                    <AlertTriangle size={16} />
-                    <p>显示失败</p>
+            const [imgSrc, setImgSrc] = useState(url);
+            const [status, setStatus] = useState('loading'); // loading, success, retry, error
+
+            useEffect(() => { setImgSrc(url); setStatus('loading'); }, [url]);
+
+            const handleError = () => {
+                // 策略1: 如果直连失败，尝试使用 weserv.nl 代理缓存
+                if (status === 'loading' && !isBase64 && !imgSrc.includes('weserv.nl')) {
+                    console.log("Direct load failed, trying proxy...");
+                    setStatus('retry');
+                    setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(url)}&n=-1`);
+                } else {
+                    // 策略2: 代理也失败，显示手动打开按钮
+                    console.log("Proxy failed or base64 error.");
+                    setStatus('error');
+                }
+            };
+
+            if (status === 'error') return (
+                <div className="bg-gray-900/50 border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="p-2 bg-red-500/10 rounded-full"><AlertTriangle size={18} className="text-red-400" /></div>
+                    <div>
+                        <p className="text-xs text-gray-300 mb-1">预览加载失败</p>
+                        <p className="text-[10px] text-gray-500 font-mono break-all max-w-[200px] truncate">{url}</p>
+                    </div>
+                    <a href={url} target="_blank" rel="noreferrer" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-bold flex items-center gap-1.5 transition-colors">
+                        <ExternalLink size={12} /> 在浏览器中打开图片
+                    </a>
                 </div>
             );
 
             return (
-                <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/20 max-w-full">
+                <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/20 min-h-[150px] flex items-center justify-center">
+                    {status === 'loading' && <div className="absolute inset-0 flex items-center justify-center"><Loader2 size={20} className="animate-spin text-indigo-400" /></div>}
                     <img 
-                        src={url} 
+                        src={imgSrc} 
                         alt="Generated" 
-                        className="w-full h-auto max-h-[300px] object-contain bg-black/40" 
+                        className={`w-full h-auto max-h-[400px] object-contain bg-black/40 transition-opacity duration-300 ${status === 'loading' ? 'opacity-0' : 'opacity-100'}`}
                         referrerPolicy="no-referrer" 
-                        onError={() => setError(true)}
+                        onLoad={() => setStatus('success')}
+                        onError={handleError}
                     />
-                    <a 
-                        href={url} 
-                        download={isBase64 ? "generated-image.png" : undefined}
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="absolute bottom-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
-                    >
-                        <Download size={14} />
-                    </a>
+                    {status === 'success' && (
+                        <a href={url} download={isBase64 ? "image.png" : undefined} target="_blank" rel="noreferrer" className="absolute bottom-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm hover:bg-black/80">
+                            <Download size={16} />
+                        </a>
+                    )}
                 </div>
             );
         };
@@ -226,12 +244,13 @@
                     } else {
                         setMessages(p => [...p, { role: 'assistant', content: '生成中...', isStreaming: true, type: mode }]);
                         const endpoint = mode === 'image' ? '/images/generations' : '/videos/generations';
+                        
+                        // 注意：这里去掉 response_format: "b64_json"，因为发现对很多聚合模型无效
                         const payload = { 
                             model: mode === 'image' ? config.api.imageModel : config.api.videoModel, 
                             prompt: newMsg.content, 
                             n: 1, 
-                            size: "1024x1024",
-                            response_format: mode === 'image' ? "b64_json" : undefined 
+                            size: "1024x1024"
                         };
                         if (newMsg.images.length) payload.image = newMsg.images[0];
 
@@ -242,16 +261,18 @@
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.error?.message || 'Generation failed');
                         
+                        // 兼容多种返回格式
                         let mediaData = null;
                         let isB64 = false;
                         if (data.data?.[0]?.b64_json) {
                             mediaData = `data:image/png;base64,${data.data[0].b64_json}`;
                             isB64 = true;
                         } else {
-                            mediaData = data.data?.[0]?.url || data.output?.[0] || data.url;
+                            // 尝试所有可能的 URL 字段
+                            mediaData = data.data?.[0]?.url || data.output?.[0] || data.url || data.data?.[0];
                         }
 
-                        if (!mediaData) throw new Error('No image data returned');
+                        if (!mediaData) throw new Error('API 未返回图片链接或数据');
                         
                         setMessages(p => {
                             const n = [...p];
@@ -319,9 +340,10 @@
                         </div>
                     </main>
 
-                    {/* Bottom Input Bar */}
+                    {/* Bottom Input Bar (Compact & Mobile Friendly) */}
                     <div className="mobile-input-bar fixed bottom-0 w-full z-40 safe-bottom">
                         <div className="max-w-2xl mx-auto p-2">
+                            {/* Compact Mode Switcher */}
                             <div className="flex justify-center mb-2">
                                 <div className="flex bg-black/40 rounded-full p-0.5 border border-white/10">
                                     {['chat','image','video'].map(m => (
@@ -335,6 +357,7 @@
                                 </div>
                             </div>
 
+                            {/* Image Previews */}
                             {images.length > 0 && (
                                 <div className="flex gap-2 overflow-x-auto px-2 mb-1">
                                     {images.map((img, i) => (
@@ -343,6 +366,7 @@
                                 </div>
                             )}
 
+                            {/* Input Row */}
                             <div className="flex items-end gap-2 bg-black/40 border border-white/10 rounded-2xl p-1">
                                 <label className="p-2.5 text-gray-400 hover:text-white cursor-pointer active:scale-90 transition-transform"><input type="file" accept="image/*" multiple className="hidden" onChange={handleImage}/><ImageIcon size={18} /></label>
                                 <textarea

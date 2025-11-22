@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OmniChat Ultimate v17</title>
+    <title>OmniChat Ultimate v18</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
@@ -25,10 +25,9 @@
         @keyframes blob { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } 100% { transform: translate(0,0) scale(1); } }
         .animate-blob { animation: blob 10s infinite ease-in-out alternate; }
         
-        /* Transitions */
-        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .sidebar-closed-mobile { transform: translateX(-100%); }
-        .sidebar-open { transform: translateX(0); }
+        /* Welcome Modal Animation */
+        @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
 <body>
@@ -36,7 +35,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
-        import { Send, Settings, Image as ImageIcon, X, Loader2, Bot, User, Brain, ChevronDown, ChevronUp, Trash2, Link as LinkIcon, Edit3, AlertTriangle, ExternalLink, RefreshCw, Zap, Sparkles, MessageSquarePlus, Palette, Video, Film, Wand2, ChevronRight, Download, Mic, Volume2, Menu, Plus, MessageSquare, MoreHorizontal } from 'https://esm.sh/lucide-react@0.263.1';
+        import { Send, Settings, Image as ImageIcon, X, Loader2, Bot, User, Brain, ChevronDown, ChevronUp, Trash2, Link as LinkIcon, Edit3, AlertTriangle, ExternalLink, RefreshCw, Zap, Sparkles, MessageSquarePlus, Palette, Video, Film, Wand2, ChevronRight, Download, Mic, Volume2, Menu, Plus, MessageSquare, MoreHorizontal, ShieldCheck, Info } from 'https://esm.sh/lucide-react@0.263.1';
 
         const DEFAULT_CONFIG = {
             api: { 
@@ -47,6 +46,86 @@
                 isCustom: true 
             },
             gemini: { apiKey: '', isEnabled: true }
+        };
+
+        // --- Components ---
+        const WelcomeModal = ({ onClose }) => {
+            return (
+                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-500">
+                    <div className="w-full max-w-md bg-[#121214] border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
+                        {/* Header */}
+                        <div className="relative h-32 bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center overflow-hidden shrink-0">
+                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                            <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] animate-blob opacity-30 bg-white blur-3xl"></div>
+                            <div className="relative z-10 text-center">
+                                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg border border-white/10">
+                                    <Zap size={28} className="text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-white tracking-tight">OmniChat Ultimate</h2>
+                                <p className="text-white/70 text-xs uppercase tracking-widest mt-1">全能多模态 AI 工作站</p>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 overflow-y-auto space-y-6">
+                            {/* Tutorial */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                                    <Sparkles size={14} /> 快速上手指南
+                                </h3>
+                                <div className="space-y-4">
+                                    <div className="flex gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-xs font-bold text-white border border-white/5">1</div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-200">配置 API 密钥</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">点击左下角设置图标 <Settings size={10} className="inline"/>，填入您的 API Key (支持柏拉图/OpenAI/DeepSeek)。</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-xs font-bold text-white border border-white/5">2</div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-200">多模态切换</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">在输入框上方自由切换 <strong>Chat</strong> (对话)、<strong>Imagine</strong> (绘画) 或 <strong>Video</strong> (视频生成)。</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-xs font-bold text-white border border-white/5">3</div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-200">语音与多会话</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">支持 <Mic size={10} className="inline"/> 语音输入。点击左上角菜单可管理多个独立会话。</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="h-px bg-white/5"></div>
+
+                            {/* Disclaimer */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                    <ShieldCheck size={14} /> 免责与隐私声明
+                                </h3>
+                                <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] text-gray-400 space-y-2 leading-relaxed">
+                                    <p>🔒 <strong>隐私安全</strong>：您的 API Key 和所有聊天记录仅存储在<strong>本地浏览器 (LocalStorage)</strong>，绝不会上传至任何未经授权的第三方服务器。</p>
+                                    <p>⚠️ <strong>内容免责</strong>：AI 生成的内容可能包含虚构或不准确信息。生成的图片/视频仅供娱乐，请勿用于非法用途。</p>
+                                    <p>💸 <strong>费用说明</strong>：本工具开源免费。API 调用产生的费用由您配置的服务商（如柏拉图）收取。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-6 pt-2 bg-[#121214] border-t border-white/5 shrink-0">
+                            <button 
+                                onClick={onClose}
+                                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                            >
+                                我已了解，开始使用 <ChevronRight size={16} />
+                            </button>
+                            <p className="text-center text-[10px] text-gray-600 mt-4 uppercase tracking-widest">Designed by Chenhao Huang</p>
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
         const MarkdownRenderer = ({ content }) => {
@@ -132,6 +211,7 @@
             const [activeSessionId, setActiveSessionId] = useState(null);
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
+            const [showWelcome, setShowWelcome] = useState(false); // Welcome Modal State
             
             // --- Chat State ---
             const [input, setInput] = useState('');
@@ -151,7 +231,7 @@
 
             // --- Initialization ---
             useEffect(() => {
-                const savedConfig = localStorage.getItem('omnichat_config_v17');
+                const savedConfig = localStorage.getItem('omnichat_config_v18');
                 if (savedConfig) {
                     const parsed = JSON.parse(savedConfig);
                     if (!parsed.api.systemPrompt) parsed.api.systemPrompt = '';
@@ -170,9 +250,14 @@
                 } else {
                     createNewSession();
                 }
+
+                // Check Welcome Flag
+                const welcomeSeen = localStorage.getItem('omnichat_welcome_seen');
+                if (!welcomeSeen) setShowWelcome(true);
+
             }, []);
 
-            useEffect(() => { localStorage.setItem('omnichat_config_v17', JSON.stringify(config)); }, [config]);
+            useEffect(() => { localStorage.setItem('omnichat_config_v18', JSON.stringify(config)); }, [config]);
             
             useEffect(() => { 
                 if (sessions.length > 0) {
@@ -191,7 +276,7 @@
                 setSessions(prev => [newSession, ...prev]);
                 setActiveSessionId(newId);
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
-                setMode('chat'); // Reset mode for new chat
+                setMode('chat');
                 return newId;
             };
 
@@ -207,7 +292,6 @@
                 setSessions(prev => prev.map(s => {
                     if (s.id === activeSessionId) {
                         const newMsgs = typeof updater === 'function' ? updater(s.messages) : updater;
-                        // Auto-title logic: if 1st user message, set title
                         let newTitle = s.title;
                         if (s.messages.length === 0 && newMsgs.length > 0 && newMsgs[0].role === 'user') {
                             newTitle = newMsgs[0].content.slice(0, 20) || (newMsgs[0].images.length ? '图片分析' : '新对话');
@@ -219,6 +303,11 @@
             };
 
             const updateConfig = (s, f, v) => setConfig(p => ({ ...p, [s]: { ...p[s], [f]: v } }));
+            
+            const closeWelcomeModal = () => {
+                localStorage.setItem('omnichat_welcome_seen', 'true');
+                setShowWelcome(false);
+            };
 
             // --- Fetching Logic ---
             const fetchAvailableModels = async () => {
@@ -260,7 +349,7 @@
                         
                         let apiMessages = [];
                         if (config.api.systemPrompt) apiMessages.push({ role: 'system', content: config.api.systemPrompt });
-                        const currentMsgs = [...activeSession.messages, newMsg]; // Use local var as state might lag
+                        const currentMsgs = [...activeSession.messages, newMsg]; 
                         apiMessages = [...apiMessages, ...currentMsgs.map(m => m.images?.length ? { role: m.role, content: [{ type: 'text', text: m.content }, ...m.images.map(u => ({ type: 'image_url', image_url: { url: u } }))] } : { role: m.role, content: m.content })];
 
                         const res = await fetch(`${baseUrl.endsWith('/chat/completions')?baseUrl:baseUrl+'/chat/completions'}`, {
@@ -365,8 +454,19 @@
                 recognition.start();
             };
 
+            const speakText = (text) => {
+                if (!('speechSynthesis' in window)) return;
+                const clean = text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/[*#`_>]/g, '');
+                const u = new SpeechSynthesisUtterance(clean);
+                u.lang = 'zh-CN';
+                window.speechSynthesis.speak(u);
+            };
+
             return (
                 <div className="flex h-screen bg-[#000000] text-gray-100 overflow-hidden">
+                    {/* Welcome Modal */}
+                    {showWelcome && <WelcomeModal onClose={closeWelcomeModal} />}
+
                     {/* Sidebar */}
                     <div className={`fixed inset-y-0 left-0 z-50 w-64 glass-sidebar transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 flex flex-col`}>
                         <div className="p-4 flex items-center justify-between">
@@ -429,7 +529,12 @@
                                 )}
                                 {activeSession.messages.map((m, i) => (
                                     <div key={i} className={`flex gap-3 ${m.role==='user'?'justify-end':'justify-start'}`}>
-                                        {m.role!=='user' && <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-1"><Bot size={14}/></div>}
+                                        {m.role!=='user' && (
+                                            <div className="flex flex-col gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-1"><Bot size={14}/></div>
+                                                {!m.mediaUrl && <button onClick={()=>speakText(m.content)} className="p-1 text-gray-600 hover:text-white self-center"><Volume2 size={12}/></button>}
+                                            </div>
+                                        )}
                                         <div className={`flex flex-col max-w-[88%] ${m.role==='user'?'items-end':'items-start'}`}>
                                             {m.images?.map((img,k)=><img key={k} src={img} className="max-h-48 rounded-lg mb-2 border border-white/10"/>)}
                                             <div className={`px-4 py-3 rounded-2xl text-sm ${m.role==='user'?'glass-bubble-user text-white rounded-tr-sm':'glass-bubble-bot text-gray-200 rounded-tl-sm'} shadow-sm`}>
@@ -512,7 +617,7 @@
                                 </div>
                                 <div className="space-y-5">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">API 连接</label>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">API 配置</label>
                                         <input type="text" value={config.api.baseUrl} onChange={(e)=>updateConfig('api','baseUrl',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono mb-2 focus:border-indigo-500/50 outline-none" placeholder="Base URL" />
                                         <input type="password" value={config.api.apiKey} onChange={(e)=>updateConfig('api','apiKey',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono focus:border-indigo-500/50 outline-none" placeholder="sk-..." />
                                     </div>
@@ -522,7 +627,7 @@
                                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">模型配置</label>
                                             <button onClick={fetchAvailableModels} disabled={isFetchingModels} className="text-[10px] text-indigo-400 hover:text-white flex items-center gap-1 transition-colors">
                                                 {isFetchingModels ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />} 
-                                                {isFetchingModels ? '更新列表' : '刷新列表'}
+                                                {isFetchingModels ? '获取中...' : '刷新列表'}
                                             </button>
                                         </div>
                                         {modelFetchError && <p className="text-[10px] text-red-400 bg-red-900/10 p-1 rounded">{modelFetchError}</p>}

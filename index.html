@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OmniChat Ultimate v19</title>
+    <title>OmniChat Ultimate v20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
@@ -25,7 +25,6 @@
         @keyframes blob { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } 100% { transform: translate(0,0) scale(1); } }
         .animate-blob { animation: blob 10s infinite ease-in-out alternate; }
         
-        /* Welcome Modal Animation */
         @keyframes fade-in-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
@@ -35,7 +34,203 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
-        import { Send, Settings, Image as ImageIcon, X, Loader2, Bot, User, Brain, ChevronDown, ChevronUp, Trash2, Link as LinkIcon, Edit3, AlertTriangle, ExternalLink, RefreshCw, Zap, Sparkles, MessageSquarePlus, Palette, Video, Film, Wand2, ChevronRight, Download, Mic, Volume2, Menu, Plus, MessageSquare, MoreHorizontal, ShieldCheck, Info } from 'https://esm.sh/lucide-react@0.263.1';
+        import { Send, Settings, Image as ImageIcon, X, Loader2, Bot, User, Brain, ChevronDown, ChevronUp, Trash2, Link as LinkIcon, Edit3, AlertTriangle, ExternalLink, RefreshCw, Zap, Sparkles, MessageSquarePlus, Palette, Video, Film, Wand2, ChevronRight, Download, Mic, Volume2, Menu, Plus, MessageSquare, MoreHorizontal, ShieldCheck, Globe } from 'https://esm.sh/lucide-react@0.263.1';
+
+        // --- Localization Data ---
+        const TRANSLATIONS = {
+            'zh-CN': {
+                title: 'OmniChat',
+                subtitle: '全能多模态 AI 工作站',
+                newChat: '新建对话',
+                settings: '设置',
+                welcome: '开始一个新的对话...',
+                chatMode: '对话模式',
+                imageMode: '绘图模式',
+                videoMode: '视频模式',
+                inputChat: '发送消息...',
+                inputImage: '描述画面内容...',
+                inputVideo: '描述视频内容...',
+                listening: '正在聆听...',
+                configTitle: '系统设置',
+                apiConfig: 'API 配置',
+                models: '模型配置',
+                systemPrompt: '系统人设 (System Prompt)',
+                systemPromptPlace: '例如：你是一个全能助手...',
+                save: '保存并关闭',
+                designedBy: 'Designed by Chenhao Huang',
+                refresh: '刷新列表',
+                updating: '获取中...',
+                updated: '已更新',
+                failed: '失败',
+                loaded: '已加载',
+                modelsCount: '个模型',
+                keyError: '请填写 API Key',
+                charError: 'Key 含非法字符',
+                genStart: '生成中...',
+                genSuccess: '生成成功',
+                genFail: '生成失败',
+                openImg: '打开',
+                loadFail: '加载失败',
+                retry: '重试',
+                guideTitle: '快速上手指南',
+                step1: '配置 API 密钥',
+                step1Desc: '点击设置图标，填入 API Key (支持柏拉图/OpenAI)。',
+                step2: '多模态切换',
+                step2Desc: '自由切换 Chat/Image/Video 模式。',
+                step3: '语音与多会话',
+                step3Desc: '支持语音输入与朗读，支持多会话管理。',
+                disclaimerTitle: '声明',
+                privacy: '隐私安全',
+                privacyDesc: 'Key 仅本地存储。',
+                contentSafe: '内容免责',
+                contentSafeDesc: '生成内容仅供参考。',
+                startBtn: '我已了解，开始使用'
+            },
+            'zh-TW': {
+                title: 'OmniChat',
+                subtitle: '全能多模態 AI 工作站',
+                newChat: '新增對話',
+                settings: '設定',
+                welcome: '開始一個新的對話...',
+                chatMode: '對話模式',
+                imageMode: '繪圖模式',
+                videoMode: '影片模式',
+                inputChat: '傳送訊息...',
+                inputImage: '描述畫面內容...',
+                inputVideo: '描述影片內容...',
+                listening: '正在聆聽...',
+                configTitle: '系統設定',
+                apiConfig: 'API 配置',
+                models: '模型配置',
+                systemPrompt: '系統人設 (System Prompt)',
+                systemPromptPlace: '例如：你是一個全能助手...',
+                save: '儲存並關閉',
+                designedBy: 'Designed by Chenhao Huang',
+                refresh: '重新整理',
+                updating: '獲取中...',
+                updated: '已更新',
+                failed: '失敗',
+                loaded: '已加載',
+                modelsCount: '個模型',
+                keyError: '請填寫 API Key',
+                charError: 'Key 含非法字符',
+                genStart: '生成中...',
+                genSuccess: '生成成功',
+                genFail: '生成失敗',
+                openImg: '開啟',
+                loadFail: '加載失敗',
+                retry: '重試',
+                guideTitle: '快速上手指南',
+                step1: '配置 API 金鑰',
+                step1Desc: '點擊設定圖示，填入 API Key。',
+                step2: '多模態切換',
+                step2Desc: '自由切換 Chat/Image/Video 模式。',
+                step3: '語音與多會話',
+                step3Desc: '支援語音輸入與朗讀，支援多會話管理。',
+                disclaimerTitle: '聲明',
+                privacy: '隱私安全',
+                privacyDesc: 'Key 僅本地存儲。',
+                contentSafe: '內容免責',
+                contentSafeDesc: '生成內容僅供參考。',
+                startBtn: '我已瞭解，開始使用'
+            },
+            'en-US': {
+                title: 'OmniChat',
+                subtitle: 'All-in-One AI Workspace',
+                newChat: 'New Chat',
+                settings: 'Settings',
+                welcome: 'Start a new conversation...',
+                chatMode: 'Chat Mode',
+                imageMode: 'Image Mode',
+                videoMode: 'Video Mode',
+                inputChat: 'Send a message...',
+                inputImage: 'Describe image...',
+                inputVideo: 'Describe video...',
+                listening: 'Listening...',
+                configTitle: 'Settings',
+                apiConfig: 'API Configuration',
+                models: 'Model Configuration',
+                systemPrompt: 'System Prompt',
+                systemPromptPlace: 'E.g., You are a helpful assistant...',
+                save: 'Save & Close',
+                designedBy: 'Designed by Chenhao Huang',
+                refresh: 'Refresh List',
+                updating: 'Fetching...',
+                updated: 'Updated',
+                failed: 'Failed',
+                loaded: 'Loaded',
+                modelsCount: 'models',
+                keyError: 'API Key Missing',
+                charError: 'Invalid Key',
+                genStart: 'Generating...',
+                genSuccess: 'Generated',
+                genFail: 'Failed',
+                openImg: 'Open',
+                loadFail: 'Load Failed',
+                retry: 'Retry',
+                guideTitle: 'Quick Start Guide',
+                step1: 'Set API Key',
+                step1Desc: 'Click settings icon and enter your API Key.',
+                step2: 'Multi-Modal',
+                step2Desc: 'Switch between Chat, Image, and Video modes.',
+                step3: 'Voice & Sessions',
+                step3Desc: 'Supports voice input/TTS and multi-session management.',
+                disclaimerTitle: 'Disclaimer',
+                privacy: 'Privacy',
+                privacyDesc: 'Keys stored locally only.',
+                contentSafe: 'Content',
+                contentSafeDesc: 'AI content for reference only.',
+                startBtn: 'Get Started'
+            },
+            'ja-JP': {
+                title: 'OmniChat',
+                subtitle: 'オールインワンAIワークステーション',
+                newChat: '新規チャット',
+                settings: '設定',
+                welcome: '新しい会話を始める...',
+                chatMode: 'チャット',
+                imageMode: '画像生成',
+                videoMode: '動画生成',
+                inputChat: 'メッセージを送信...',
+                inputImage: '画像の内容を記述...',
+                inputVideo: '動画の内容を記述...',
+                listening: '聞き取り中...',
+                configTitle: 'システム設定',
+                apiConfig: 'API設定',
+                models: 'モデル設定',
+                systemPrompt: 'システムプロンプト',
+                systemPromptPlace: '例：あなたは優秀なアシスタントです...',
+                save: '保存して閉じる',
+                designedBy: 'Designed by Chenhao Huang',
+                refresh: '更新',
+                updating: '取得中...',
+                updated: '更新完了',
+                failed: '失敗',
+                loaded: 'ロード完了',
+                modelsCount: 'モデル',
+                keyError: 'APIキーを入力してください',
+                charError: '不正な文字が含まれています',
+                genStart: '生成中...',
+                genSuccess: '生成完了',
+                genFail: '生成失敗',
+                openImg: '開く',
+                loadFail: '読込失敗',
+                retry: '再試行',
+                guideTitle: 'クイックガイド',
+                step1: 'APIキー設定',
+                step1Desc: '設定アイコンをクリックし、APIキーを入力します。',
+                step2: 'マルチモーダル',
+                step2Desc: 'チャット、画像、動画モードを自由に切り替え。',
+                step3: '音声とセッション',
+                step3Desc: '音声入力/読み上げ、マルチセッション管理に対応。',
+                disclaimerTitle: '免責事項',
+                privacy: 'プライバシー',
+                privacyDesc: 'キーはローカルにのみ保存されます。',
+                contentSafe: 'コンテンツ',
+                contentSafeDesc: '生成内容は参考用です。',
+                startBtn: '始める'
+            }
+        };
 
         const DEFAULT_CONFIG = {
             api: { 
@@ -45,11 +240,12 @@
                 systemPrompt: '', 
                 isCustom: true 
             },
-            gemini: { apiKey: '', isEnabled: true }
+            gemini: { apiKey: '', isEnabled: true },
+            language: 'zh-CN' // Default Language
         };
 
         // --- Components ---
-        const WelcomeModal = ({ onClose }) => {
+        const WelcomeModal = ({ onClose, t }) => {
             return (
                 <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-500">
                     <div className="w-full max-w-md bg-[#121214] border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
@@ -60,28 +256,35 @@
                                 <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg border border-white/10">
                                     <Zap size={28} className="text-white" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-white tracking-tight">OmniChat Ultimate</h2>
-                                <p className="text-white/70 text-xs uppercase tracking-widest mt-1">全能多模态 AI 工作站</p>
+                                <h2 className="text-2xl font-bold text-white tracking-tight">{t('title')}</h2>
+                                <p className="text-white/70 text-xs uppercase tracking-widest mt-1">{t('subtitle')}</p>
                             </div>
                         </div>
                         <div className="p-6 overflow-y-auto space-y-6">
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
-                                    <Sparkles size={14} /> 快速上手指南
+                                    <Sparkles size={14} /> {t('guideTitle')}
                                 </h3>
                                 <div className="space-y-4">
                                     <div className="flex gap-3">
                                         <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-xs font-bold text-white border border-white/5">1</div>
                                         <div>
-                                            <h4 className="text-sm font-medium text-gray-200">配置 API 密钥</h4>
-                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">点击左下角设置图标 <Settings size={10} className="inline"/>，填入您的 API Key。</p>
+                                            <h4 className="text-sm font-medium text-gray-200">{t('step1')}</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{t('step1Desc')}</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-3">
                                         <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-xs font-bold text-white border border-white/5">2</div>
                                         <div>
-                                            <h4 className="text-sm font-medium text-gray-200">多模态 & 语音</h4>
-                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">支持 Chat/Image/Video 切换，支持语音输入与朗读。</p>
+                                            <h4 className="text-sm font-medium text-gray-200">{t('step2')}</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{t('step2Desc')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-xs font-bold text-white border border-white/5">3</div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-200">{t('step3')}</h4>
+                                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{t('step3Desc')}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -89,50 +292,39 @@
                             <div className="h-px bg-white/5"></div>
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
-                                    <ShieldCheck size={14} /> 声明
+                                    <ShieldCheck size={14} /> {t('disclaimerTitle')}
                                 </h3>
                                 <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] text-gray-400 space-y-2 leading-relaxed">
-                                    <p>🔒 <strong>隐私安全</strong>：Key 仅本地存储。</p>
-                                    <p>⚠️ <strong>内容免责</strong>：生成内容仅供参考。</p>
+                                    <p>🔒 <strong>{t('privacy')}</strong>：{t('privacyDesc')}</p>
+                                    <p>⚠️ <strong>{t('contentSafe')}</strong>：{t('contentSafeDesc')}</p>
                                 </div>
                             </div>
                         </div>
                         <div className="p-6 pt-2 bg-[#121214] border-t border-white/5 shrink-0">
                             <button onClick={onClose} className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-                                我已了解，开始使用 <ChevronRight size={16} />
+                                {t('startBtn')} <ChevronRight size={16} />
                             </button>
-                            <p className="text-center text-[10px] text-gray-600 mt-4 uppercase tracking-widest">Designed by Chenhao Huang</p>
+                            <p className="text-center text-[10px] text-gray-600 mt-4 uppercase tracking-widest">{t('designedBy')}</p>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // --- Enhanced Markdown Renderer (Fixes Bold & Tables) ---
         const MarkdownRenderer = ({ content }) => {
             if (!content) return null;
-
             const parseInline = (text) => {
-                // Split by Inline Code first to protect code
                 const codeSegments = text.split(/(`[^`]+`)/g);
-                
                 return codeSegments.map((seg, i) => {
-                    if (seg.startsWith('`') && seg.endsWith('`')) {
-                        return <code key={i} className="bg-white/10 text-indigo-300 px-1.5 py-0.5 rounded text-xs font-mono border border-white/5 mx-0.5">{seg.slice(1, -1)}</code>;
-                    }
-                    // Split by Bold (**text**)
+                    if (seg.startsWith('`') && seg.endsWith('`')) return <code key={i} className="bg-white/10 text-indigo-300 px-1.5 py-0.5 rounded text-xs font-mono border border-white/5 mx-0.5">{seg.slice(1, -1)}</code>;
                     const boldSegments = seg.split(/(\*\*[^*]+\*\*)/g);
                     return boldSegments.map((bSeg, j) => {
-                        if (bSeg.startsWith('**') && bSeg.endsWith('**')) {
-                            return <strong key={`${i}-${j}`} className="text-white font-extrabold mx-0.5">{bSeg.slice(2, -2)}</strong>;
-                        }
+                        if (bSeg.startsWith('**') && bSeg.endsWith('**')) return <strong key={`${i}-${j}`} className="text-white font-extrabold mx-0.5">{bSeg.slice(2, -2)}</strong>;
                         return bSeg;
                     });
                 });
             };
-
             const parts = content.split(/(```[\s\S]*?```)/g);
-
             return (
                 <div className="break-words text-[14px] leading-relaxed text-gray-200 font-sans space-y-2">
                     {parts.map((part, index) => {
@@ -150,81 +342,40 @@
                                 </div>
                             );
                         }
-
-                        // Table & Block Parser
                         const lines = part.split('\n');
                         const elements = [];
                         let tableBuffer = [];
-                        
                         for (let i = 0; i < lines.length; i++) {
                             const line = lines[i].trim();
-                            
-                            // Table Detection
                             if (line.startsWith('|') || (line.split('|').length > 2 && line.includes('-'))) {
                                 tableBuffer.push(line);
                                 const nextLine = lines[i+1]?.trim();
-                                // Flush table if next line is not table part or end of lines
                                 if (!nextLine || (!nextLine.startsWith('|') && nextLine.split('|').length < 3)) {
                                     if (tableBuffer.length >= 2 && tableBuffer[1].includes('---')) {
-                                        // Render Table
                                         const headerRow = tableBuffer[0].split('|').filter(c => c.trim()).map(c => c.trim());
                                         const bodyRows = tableBuffer.slice(2).map(r => r.split('|').filter(c => c.trim()).map(c => c.trim()));
                                         elements.push(
                                             <div key={`table-${i}`} className="overflow-x-auto my-3 border border-white/10 rounded-lg bg-white/5">
                                                 <table className="min-w-full text-xs text-left text-gray-300">
-                                                    <thead className="bg-white/5 uppercase font-bold text-gray-200">
-                                                        <tr>{headerRow.map((h, hi) => <th key={hi} className="px-4 py-2 border-b border-white/10 whitespace-nowrap">{parseInline(h)}</th>)}</tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {bodyRows.map((row, ri) => (
-                                                            <tr key={ri} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                                                                {row.map((cell, ci) => <td key={ci} className="px-4 py-2 align-top">{parseInline(cell)}</td>)}
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
+                                                    <thead className="bg-white/5 uppercase font-bold text-gray-200"><tr>{headerRow.map((h, hi) => <th key={hi} className="px-4 py-2 border-b border-white/10 whitespace-nowrap">{parseInline(h)}</th>)}</tr></thead>
+                                                    <tbody>{bodyRows.map((row, ri) => (<tr key={ri} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">{row.map((cell, ci) => <td key={ci} className="px-4 py-2 align-top">{parseInline(cell)}</td>)}</tr>))}</tbody>
                                                 </table>
                                             </div>
                                         );
-                                    } else {
-                                        // Fallback for broken tables
-                                        tableBuffer.forEach((l, li) => elements.push(<p key={`p-tbl-${i}-${li}`} className="mb-1">{parseInline(l)}</p>));
-                                    }
+                                    } else tableBuffer.forEach((l, li) => elements.push(<p key={`p-tbl-${i}-${li}`} className="mb-1">{parseInline(l)}</p>));
                                     tableBuffer = [];
                                 }
                                 continue;
                             }
-
-                            if (line === '') {
-                                elements.push(<div key={`br-${i}`} className="h-2"></div>);
-                                continue;
-                            }
-
-                            // Headers
+                            if (line === '') { elements.push(<div key={`br-${i}`} className="h-2"></div>); continue; }
                             if (line.startsWith('### ')) { elements.push(<h3 key={`h3-${i}`} className="text-base font-bold text-white mt-4 mb-2">{parseInline(line.slice(4))}</h3>); continue; }
                             if (line.startsWith('## ')) { elements.push(<h2 key={`h2-${i}`} className="text-lg font-extrabold text-white mt-5 mb-3 border-b border-white/10 pb-1">{parseInline(line.slice(3))}</h2>); continue; }
                             if (line.startsWith('# ')) { elements.push(<h1 key={`h1-${i}`} className="text-xl font-black text-white mt-6 mb-4 border-b border-white/10 pb-2">{parseInline(line.slice(2))}</h1>); continue; }
-                            
-                            // Lists
-                            if (line.match(/^[-*]\s/)) {
-                                elements.push(<div key={`ul-${i}`} className="flex gap-2 ml-1 mb-1"><span className="text-indigo-400 font-bold mt-1.5 text-[10px]">•</span><span className="flex-1">{parseInline(line.replace(/^[-*]\s/, ''))}</span></div>);
-                                continue;
-                            }
-                            if (line.match(/^\d+\.\s/)) {
-                                const match = line.match(/^(\d+)\.\s(.*)/);
-                                elements.push(<div key={`ol-${i}`} className="flex gap-2 ml-1 mb-1"><span className="text-indigo-400 font-mono font-bold">{match[1]}.</span><span className="flex-1">{parseInline(match[2])}</span></div>);
-                                continue;
-                            }
-                            
-                            // Blockquote
-                            if (line.startsWith('> ')) {
-                                elements.push(<div key={`quote-${i}`} className="border-l-2 border-indigo-500/50 pl-3 py-2 my-2 text-gray-400 italic bg-white/5 rounded-r text-xs">{parseInline(line.slice(2))}</div>);
-                                continue;
-                            }
-
-                            // Paragraph
+                            if (line.match(/^[-*]\s/)) { elements.push(<div key={`ul-${i}`} className="flex gap-2 ml-1 mb-1"><span className="text-indigo-400 font-bold mt-1.5 text-[10px]">•</span><span className="flex-1">{parseInline(line.replace(/^[-*]\s/, ''))}</span></div>); continue; }
+                            if (line.match(/^\d+\.\s/)) { const match = line.match(/^(\d+)\.\s(.*)/); elements.push(<div key={`ol-${i}`} className="flex gap-2 ml-1 mb-1"><span className="text-indigo-400 font-mono font-bold">{match[1]}.</span><span className="flex-1">{parseInline(match[2])}</span></div>); continue; }
+                            if (line.startsWith('> ')) { elements.push(<div key={`quote-${i}`} className="border-l-2 border-indigo-500/50 pl-3 py-2 my-2 text-gray-400 italic bg-white/5 rounded-r text-xs">{parseInline(line.slice(2))}</div>); continue; }
                             elements.push(<p key={`p-${i}`} className="mb-1.5">{parseInline(line)}</p>);
                         }
-                        
                         return <div key={index}>{elements}</div>;
                     })}
                 </div>
@@ -245,121 +396,97 @@
             );
         };
 
-        const ImageDisplay = ({ url, isBase64 }) => {
+        const ImageDisplay = ({ url, isBase64, t }) => {
             const [imgSrc, setImgSrc] = useState(url);
             const [status, setStatus] = useState('loading');
-
             useEffect(() => { setImgSrc(url); setStatus('loading'); }, [url]);
-
             const handleError = () => {
-                if (status === 'loading' && !isBase64 && !imgSrc.includes('weserv.nl')) {
-                    setStatus('retry');
-                    setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(url)}&n=-1`);
-                } else {
-                    setStatus('error');
-                }
+                if (status === 'loading' && !isBase64 && !imgSrc.includes('weserv.nl')) { setStatus('retry'); setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(url)}&n=-1`); } 
+                else { setStatus('error'); }
             };
-
             if (status === 'error') return (
                 <div className="bg-gray-900/50 border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center gap-3 text-center">
                     <div className="p-2 bg-red-500/10 rounded-full"><AlertTriangle size={18} className="text-red-400" /></div>
-                    <div className="text-xs text-gray-400">加载失败</div>
-                    <a href={url} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-bold flex items-center gap-1.5 transition-colors">
-                        <ExternalLink size={12} /> 打开
-                    </a>
+                    <div className="text-xs text-gray-400">{t('loadFail')}</div>
+                    <a href={url} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white text-xs font-bold flex items-center gap-1.5 transition-colors"><ExternalLink size={12} /> {t('openImg')}</a>
                 </div>
             );
-
             return (
                 <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/20 min-h-[150px] flex items-center justify-center">
                     {status === 'loading' && <div className="absolute inset-0 flex items-center justify-center"><Loader2 size={20} className="animate-spin text-indigo-400" /></div>}
-                    <img 
-                        src={imgSrc} 
-                        alt="Generated" 
-                        className={`w-full h-auto max-h-[300px] object-contain bg-black/40 transition-opacity duration-300 ${status === 'loading' ? 'opacity-0' : 'opacity-100'}`}
-                        referrerPolicy="no-referrer" 
-                        onLoad={() => setStatus('success')}
-                        onError={handleError}
-                    />
-                    {status === 'success' && (
-                        <a href={url} download={isBase64 ? "image.png" : undefined} target="_blank" rel="noreferrer" className="absolute bottom-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm hover:bg-black/80">
-                            <Download size={16} />
-                        </a>
-                    )}
+                    <img src={imgSrc} alt="Generated" className={`w-full h-auto max-h-[300px] object-contain bg-black/40 transition-opacity duration-300 ${status === 'loading' ? 'opacity-0' : 'opacity-100'}`} referrerPolicy="no-referrer" onLoad={() => setStatus('success')} onError={handleError} />
+                    {status === 'success' && <a href={url} download={isBase64 ? "image.png" : undefined} target="_blank" rel="noreferrer" className="absolute bottom-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm hover:bg-black/80"><Download size={16} /></a>}
                 </div>
             );
         };
 
         function OmniChat() {
-            // --- Global State ---
             const [config, setConfig] = useState(DEFAULT_CONFIG);
             const [sessions, setSessions] = useState([]);
             const [activeSessionId, setActiveSessionId] = useState(null);
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
-            const [showWelcome, setShowWelcome] = useState(false); // Welcome Modal State
-            
-            // --- Chat State ---
+            const [showWelcome, setShowWelcome] = useState(false);
             const [input, setInput] = useState('');
             const [isLoading, setIsLoading] = useState(false);
             const [mode, setMode] = useState('chat');
             const [useReasoning, setUseReasoning] = useState(false);
             const [images, setImages] = useState([]);
             const [isListening, setIsListening] = useState(false);
-            
-            // --- Model Fetching State ---
             const [fetchedModels, setFetchedModels] = useState([]);
             const [isFetchingModels, setIsFetchingModels] = useState(false);
             const [modelFetchError, setModelFetchError] = useState('');
-
             const messagesEndRef = useRef(null);
             const abortRef = useRef(null);
-            const speechRef = useRef(null);
 
-            // --- Initialization ---
             useEffect(() => {
-                const savedConfig = localStorage.getItem('omnichat_config_v19');
+                const savedConfig = localStorage.getItem('omnichat_config_v20');
+                let initialLang = 'zh-CN';
                 if (savedConfig) {
                     const parsed = JSON.parse(savedConfig);
                     if (!parsed.api.systemPrompt) parsed.api.systemPrompt = '';
+                    if (parsed.language) initialLang = parsed.language;
                     setConfig(prev => ({ ...prev, ...parsed, api: { ...prev.api, ...parsed.api } }));
                 } else {
+                    // Auto detect language
+                    const browserLang = navigator.language;
+                    if (browserLang.startsWith('zh')) initialLang = browserLang.includes('TW') || browserLang.includes('HK') ? 'zh-TW' : 'zh-CN';
+                    else if (browserLang.startsWith('ja')) initialLang = 'ja-JP';
+                    else initialLang = 'en-US';
+                    setConfig(prev => ({ ...prev, language: initialLang }));
                     setShowSettings(true);
                 }
-
-                // Load Sessions
+                
                 const savedSessions = localStorage.getItem('omnichat_sessions_v1');
                 if (savedSessions) {
                     const parsedSessions = JSON.parse(savedSessions);
                     setSessions(parsedSessions);
                     if (parsedSessions.length > 0) setActiveSessionId(parsedSessions[0].id);
-                    else createNewSession();
+                    else createNewSession(initialLang);
                 } else {
-                    createNewSession();
+                    createNewSession(initialLang);
                 }
 
-                // Check Welcome Flag
                 const welcomeSeen = localStorage.getItem('omnichat_welcome_seen');
                 if (!welcomeSeen) setShowWelcome(true);
-
             }, []);
 
-            useEffect(() => { localStorage.setItem('omnichat_config_v19', JSON.stringify(config)); }, [config]);
-            
-            useEffect(() => { 
-                if (sessions.length > 0) {
-                    localStorage.setItem('omnichat_sessions_v1', JSON.stringify(sessions)); 
-                }
-            }, [sessions]);
-
+            useEffect(() => { localStorage.setItem('omnichat_config_v20', JSON.stringify(config)); }, [config]);
+            useEffect(() => { if (sessions.length > 0) localStorage.setItem('omnichat_sessions_v1', JSON.stringify(sessions)); }, [sessions]);
             useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [sessions, activeSessionId, isLoading]);
 
-            // --- Session Management ---
+            // Helper for translation
+            const t = (key) => {
+                const lang = config.language || 'zh-CN';
+                return TRANSLATIONS[lang][key] || TRANSLATIONS['zh-CN'][key] || key;
+            };
+
             const activeSession = sessions.find(s => s.id === activeSessionId) || { messages: [] };
             
-            const createNewSession = () => {
+            const createNewSession = (lang) => {
+                const currentLang = lang || config.language || 'zh-CN';
                 const newId = Date.now().toString();
-                const newSession = { id: newId, title: '新对话', messages: [], created: Date.now() };
+                const newSession = { id: newId, title: TRANSLATIONS[currentLang].newChat, messages: [], created: Date.now() };
                 setSessions(prev => [newSession, ...prev]);
                 setActiveSessionId(newId);
                 if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -381,7 +508,7 @@
                         const newMsgs = typeof updater === 'function' ? updater(s.messages) : updater;
                         let newTitle = s.title;
                         if (s.messages.length === 0 && newMsgs.length > 0 && newMsgs[0].role === 'user') {
-                            newTitle = newMsgs[0].content.slice(0, 20) || (newMsgs[0].images.length ? '图片分析' : '新对话');
+                            newTitle = newMsgs[0].content.slice(0, 20) || (newMsgs[0].images.length ? 'Image' : t('newChat'));
                         }
                         return { ...s, messages: newMsgs, title: newTitle };
                     }
@@ -396,10 +523,9 @@
                 setShowWelcome(false);
             };
 
-            // --- Fetching Logic ---
             const fetchAvailableModels = async () => {
                 const currentConfig = config.api;
-                if (!currentConfig.apiKey) { setModelFetchError("请填写 API Key"); return; }
+                if (!currentConfig.apiKey) { setModelFetchError(t('keyError')); return; }
                 const safeApiKey = currentConfig.apiKey.trim();
                 setIsFetchingModels(true); setModelFetchError(''); setFetchedModels([]);
                 try {
@@ -409,10 +535,10 @@
                     const data = await res.json();
                     let arr = (data.data && Array.isArray(data.data)) ? data.data : (Array.isArray(data) ? data : []);
                     if (arr.length) setFetchedModels(arr.map(m => m.id || m).sort());
-                    else throw new Error('格式异常');
+                    else throw new Error('Format Error');
                 } catch (err) { 
                     console.error("Fetch Models Error:", err);
-                    setModelFetchError(`失败: ${err.message}`); 
+                    setModelFetchError(`${t('failed')}: ${err.message}`); 
                 } finally { 
                     setIsFetchingModels(false); 
                 }
@@ -475,7 +601,7 @@
                             }
                         }
                     } else {
-                        updateActiveSessionMessages(prev => [...prev, { role: 'assistant', content: '生成中...', isStreaming: true, type: mode }]);
+                        updateActiveSessionMessages(prev => [...prev, { role: 'assistant', content: t('genStart'), isStreaming: true, type: mode }]);
                         const endpoint = mode === 'image' ? '/images/generations' : '/videos/generations';
                         const payload = { 
                             model: mode === 'image' ? config.api.imageModel : config.api.videoModel, 
@@ -503,7 +629,7 @@
                             const n = [...prev];
                             const last = n[n.length-1];
                             last.isStreaming = false;
-                            last.content = `生成成功: ${newMsg.content}`;
+                            last.content = `${t('genSuccess')}: ${newMsg.content}`;
                             last.mediaUrl = mediaData;
                             last.isBase64 = isB64;
                             return n;
@@ -511,7 +637,7 @@
                     }
                 } catch (e) {
                     if (e.name !== 'AbortError') {
-                        updateActiveSessionMessages(prev => { const n = [...prev]; n[n.length-1].isError=true; n[n.length-1].content=`❌ 错误: ${e.message}`; return n; });
+                        updateActiveSessionMessages(prev => { const n = [...prev]; n[n.length-1].isError=true; n[n.length-1].content=`❌ ${t('failed')}: ${e.message}`; return n; });
                     }
                 } finally { 
                     setIsLoading(false); 
@@ -528,10 +654,10 @@
             };
 
             const startListening = () => {
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return alert("浏览器不支持");
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return alert("Browser not supported");
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 const recognition = new SpeechRecognition();
-                recognition.lang = 'zh-CN';
+                recognition.lang = config.language || 'zh-CN';
                 recognition.onstart = () => setIsListening(true);
                 recognition.onend = () => setIsListening(false);
                 recognition.onerror = () => setIsListening(false);
@@ -545,24 +671,23 @@
                 if (!('speechSynthesis' in window)) return;
                 const clean = text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/[*#`_>]/g, '');
                 const u = new SpeechSynthesisUtterance(clean);
-                u.lang = 'zh-CN';
+                u.lang = config.language || 'zh-CN';
                 window.speechSynthesis.speak(u);
             };
 
             return (
                 <div className="flex h-screen bg-[#000000] text-gray-100 overflow-hidden">
-                    {/* Welcome Modal */}
-                    {showWelcome && <WelcomeModal onClose={closeWelcomeModal} />}
+                    {showWelcome && <WelcomeModal onClose={closeWelcomeModal} t={t} />}
 
                     {/* Sidebar */}
                     <div className={`fixed inset-y-0 left-0 z-50 w-64 glass-sidebar transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 flex flex-col`}>
                         <div className="p-4 flex items-center justify-between">
-                            <h1 className="font-bold text-xl tracking-tight flex items-center gap-2"><Zap size={20} className="text-indigo-500"/> OmniChat</h1>
+                            <h1 className="font-bold text-xl tracking-tight flex items-center gap-2"><Zap size={20} className="text-indigo-500"/> {t('title')}</h1>
                             <button onClick={()=>setIsSidebarOpen(false)} className="md:hidden p-1 text-gray-400"><X size={20}/></button>
                         </div>
                         <div className="px-3 pb-2">
-                            <button onClick={createNewSession} className="w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all active:scale-95">
-                                <Plus size={16} /> 新建对话
+                            <button onClick={()=>createNewSession()} className="w-full py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all active:scale-95">
+                                <Plus size={16} /> {t('newChat')}
                             </button>
                         </div>
                         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
@@ -580,17 +705,14 @@
                         </div>
                         <div className="p-4 border-t border-white/5">
                             <button onClick={()=>setShowSettings(true)} className="flex items-center gap-3 text-sm text-gray-400 hover:text-white transition-colors w-full p-2 rounded-lg hover:bg-white/5">
-                                <Settings size={18} /> <span>设置</span>
+                                <Settings size={18} /> <span>{t('settings')}</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Overlay for Mobile */}
                     {isSidebarOpen && <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={()=>setIsSidebarOpen(false)}></div>}
 
-                    {/* Main Content */}
                     <div className="flex-1 flex flex-col h-full relative w-full">
-                        {/* Header */}
                         <header className="flex-none px-4 py-3 border-b border-white/10 bg-[#050505]/80 backdrop-blur-md z-30 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <button onClick={()=>setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-gray-400 hover:text-white"><Menu size={20}/></button>
@@ -603,7 +725,6 @@
                             </div>
                         </header>
 
-                        {/* Messages Area */}
                         <main className="flex-1 overflow-y-auto p-3 pb-32">
                             <div className="max-w-3xl mx-auto space-y-6">
                                 {activeSession.messages.length === 0 && (
@@ -611,7 +732,7 @@
                                         <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center">
                                             <Bot size={32} className="opacity-50"/>
                                         </div>
-                                        <p className="text-sm">开始一个新的对话...</p>
+                                        <p className="text-sm">{t('welcome')}</p>
                                     </div>
                                 )}
                                 {activeSession.messages.map((m, i) => (
@@ -625,7 +746,7 @@
                                         <div className={`flex flex-col max-w-[88%] ${m.role==='user'?'items-end':'items-start'}`}>
                                             {m.images?.map((img,k)=><img key={k} src={img} className="max-h-48 rounded-lg mb-2 border border-white/10"/>)}
                                             <div className={`px-4 py-3 rounded-2xl text-sm ${m.role==='user'?'glass-bubble-user text-white rounded-tr-sm':'glass-bubble-bot text-gray-200 rounded-tl-sm'} shadow-sm`}>
-                                                {m.mediaUrl ? <ImageDisplay url={m.mediaUrl} isBase64={m.isBase64} /> : (
+                                                {m.mediaUrl ? <ImageDisplay url={m.mediaUrl} isBase64={m.isBase64} t={t} /> : (
                                                     m.content.includes('<think>') 
                                                     ? <><ThinkingBlock content={m.content.match(/<think>([\s\S]*?)<\/think>/)?.[1]} isStreaming={m.isStreaming} /><MarkdownRenderer content={m.content.replace(/<think>[\s\S]*?<\/think>/,'')} /></>
                                                     : <MarkdownRenderer content={m.content} />
@@ -639,10 +760,8 @@
                             </div>
                         </main>
 
-                        {/* Input Area */}
                         <div className="mobile-input-bar fixed bottom-0 w-full md:absolute md:w-full z-30 safe-bottom">
                             <div className="max-w-3xl mx-auto p-3">
-                                {/* Mode Switcher */}
                                 <div className="flex justify-center mb-2">
                                     <div className="flex bg-black/40 rounded-full p-0.5 border border-white/10 backdrop-blur-xl">
                                         {['chat','image','video'].map(mo => (
@@ -650,13 +769,12 @@
                                                 {mo==='chat' && <MessageSquarePlus size={12}/>}
                                                 {mo==='image' && <ImageIcon size={12}/>}
                                                 {mo==='video' && <Video size={12}/>}
-                                                <span>{mo}</span>
+                                                <span>{t(mo+'Mode')}</span>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
-                                {/* Image Previews */}
                                 {images.length > 0 && (
                                     <div className="flex gap-2 overflow-x-auto px-2 mb-2">
                                         {images.map((img, i) => (
@@ -665,14 +783,13 @@
                                     </div>
                                 )}
 
-                                {/* Input Box */}
                                 <div className="flex items-end gap-2 bg-[#1a1a1c] border border-white/10 rounded-[1.25rem] p-1.5 shadow-xl">
                                     <label className="p-2.5 text-gray-400 hover:text-white cursor-pointer transition-transform active:scale-90 rounded-full hover:bg-white/5"><input type="file" accept="image/*" multiple className="hidden" onChange={handleImage}/><ImageIcon size={20} /></label>
                                     <textarea
                                         value={input}
                                         onChange={(e)=>setInput(e.target.value)}
                                         onKeyDown={(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}}}
-                                        placeholder={isListening ? '正在聆听...' : (mode==='chat'?'发送消息...':`描述${mode}内容...`)}
+                                        placeholder={isListening ? t('listening') : (mode==='chat'?t('inputChat'):(mode==='image'?t('inputImage'):t('inputVideo')))}
                                         className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm py-2.5 max-h-32 resize-none placeholder-gray-500 leading-relaxed"
                                         rows={1}
                                     />
@@ -692,63 +809,71 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Settings Modal */}
-                    {showSettings && (
-                        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center p-4 animate-in fade-in duration-200">
-                            <div className="w-full max-w-lg bg-[#121214] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-lg font-bold text-white flex items-center gap-2"><Settings size={18}/> 设置</h2>
-                                    <button onClick={()=>setShowSettings(false)} className="p-1.5 bg-white/10 rounded-full hover:bg-white/20"><X size={16}/></button>
-                                </div>
-                                <div className="space-y-5">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">API 配置</label>
-                                        <input type="text" value={config.api.baseUrl} onChange={(e)=>updateConfig('api','baseUrl',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono mb-2 focus:border-indigo-500/50 outline-none" placeholder="Base URL" />
-                                        <input type="password" value={config.api.apiKey} onChange={(e)=>updateConfig('api','apiKey',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono focus:border-indigo-500/50 outline-none" placeholder="sk-..." />
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">模型配置</label>
-                                            <button onClick={fetchAvailableModels} disabled={isFetchingModels} className="text-[10px] text-indigo-400 hover:text-white flex items-center gap-1 transition-colors">
-                                                {isFetchingModels ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />} 
-                                                {isFetchingModels ? '获取中...' : '刷新列表'}
-                                            </button>
+                        {showSettings && (
+                            <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center p-4 animate-in fade-in duration-200">
+                                <div className="w-full max-w-lg bg-[#121214] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-lg font-bold text-white flex items-center gap-2"><Settings size={18}/> {t('configTitle')}</h2>
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-white/10 rounded-lg p-1 flex gap-1">
+                                                {['zh-CN','zh-TW','en-US','ja-JP'].map(l => (
+                                                    <button key={l} onClick={()=>setConfig(p=>({...p, language:l}))} className={`text-[10px] px-2 py-1 rounded ${config.language===l ? 'bg-white text-black font-bold' : 'text-gray-400'}`}>
+                                                        {l==='zh-CN'?'简':l==='zh-TW'?'繁':l==='en-US'?'EN':'JP'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <button onClick={()=>setShowSettings(false)} className="p-1.5 bg-white/10 rounded-full hover:bg-white/20"><X size={16}/></button>
                                         </div>
-                                        {modelFetchError && <p className="text-[10px] text-red-400 bg-red-900/10 p-1 rounded">{modelFetchError}</p>}
-                                        {fetchedModels.length > 0 && <p className="text-[10px] text-green-400 bg-green-900/10 p-1 rounded">已加载 {fetchedModels.length} 个可用模型</p>}
+                                    </div>
+                                    <div className="space-y-5">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{t('apiConfig')}</label>
+                                            <input type="text" value={config.api.baseUrl} onChange={(e)=>updateConfig('api','baseUrl',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono mb-2 focus:border-indigo-500/50 outline-none" placeholder="Base URL" />
+                                            <input type="password" value={config.api.apiKey} onChange={(e)=>updateConfig('api','apiKey',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono focus:border-indigo-500/50 outline-none" placeholder="sk-..." />
+                                        </div>
                                         
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {[
-                                                {l:'Chat',k:'chatModel'},{l:'Reasoning',k:'reasoningModel'},
-                                                {l:'Image',k:'imageModel'},{l:'Video',k:'videoModel'}
-                                            ].map(f => (
-                                                <div key={f.k}>
-                                                    <label className="text-[9px] text-gray-500 block mb-1">{f.l}</label>
-                                                    {fetchedModels.length > 0 && <select onChange={(e)=>updateConfig('api',f.k,e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-1.5 text-[10px] mb-1 text-gray-300 outline-none" value={config.api[f.k]}>{fetchedModels.map(m=><option key={m} value={m}>{m}</option>)}</select>}
-                                                    <input type="text" value={config.api[f.k]} onChange={(e)=>updateConfig('api',f.k,e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none focus:border-indigo-500/50" placeholder={f.l}/>
-                                                </div>
-                                            ))}
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{t('models')}</label>
+                                                <button onClick={fetchAvailableModels} disabled={isFetchingModels} className="text-[10px] text-indigo-400 hover:text-white flex items-center gap-1 transition-colors">
+                                                    {isFetchingModels ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />} 
+                                                    {isFetchingModels ? t('updating') : t('refresh')}
+                                                </button>
+                                            </div>
+                                            {modelFetchError && <p className="text-[10px] text-red-400 bg-red-900/10 p-1 rounded">{modelFetchError}</p>}
+                                            {fetchedModels.length > 0 && <p className="text-[10px] text-green-400 bg-green-900/10 p-1 rounded">{t('updated')} {fetchedModels.length} {t('modelsCount')}</p>}
+                                            
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {[
+                                                    {l:'Chat',k:'chatModel'},{l:'Reasoning',k:'reasoningModel'},
+                                                    {l:'Image',k:'imageModel'},{l:'Video',k:'videoModel'}
+                                                ].map(f => (
+                                                    <div key={f.k}>
+                                                        <label className="text-[9px] text-gray-500 block mb-1">{f.l}</label>
+                                                        {fetchedModels.length > 0 && <select onChange={(e)=>updateConfig('api',f.k,e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-1.5 text-[10px] mb-1 text-gray-300 outline-none" value={config.api[f.k]}>{fetchedModels.map(m=><option key={m} value={m}>{m}</option>)}</select>}
+                                                        <input type="text" value={config.api[f.k]} onChange={(e)=>updateConfig('api',f.k,e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-[10px] text-white outline-none focus:border-indigo-500/50" placeholder={f.l}/>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{t('systemPrompt')}</label>
+                                            <textarea 
+                                                value={config.api.systemPrompt || ''} 
+                                                onChange={(e)=>updateConfig('api','systemPrompt',e.target.value)} 
+                                                className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono min-h-[80px] focus:border-indigo-500/50 outline-none resize-none" 
+                                                placeholder={t('systemPromptPlace')}
+                                            />
                                         </div>
                                     </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">系统人设 (System Prompt)</label>
-                                        <textarea 
-                                            value={config.api.systemPrompt || ''} 
-                                            onChange={(e)=>updateConfig('api','systemPrompt',e.target.value)} 
-                                            className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono min-h-[80px] focus:border-indigo-500/50 outline-none resize-none" 
-                                            placeholder="你是一个全能助手..."
-                                        />
-                                    </div>
+                                    <button onClick={()=>setShowSettings(false)} className="w-full mt-6 bg-white text-black font-bold py-3.5 rounded-xl text-sm hover:bg-gray-200 transition-colors">{t('save')}</button>
+                                    <p className="text-center text-[10px] text-gray-600 mt-4 uppercase tracking-widest">{t('designedBy')}</p>
                                 </div>
-                                <button onClick={()=>setShowSettings(false)} className="w-full mt-6 bg-white text-black font-bold py-3.5 rounded-xl text-sm hover:bg-gray-200 transition-colors">保存并关闭</button>
-                                <p className="text-center text-[10px] text-gray-600 mt-4 uppercase tracking-widest">Designed by Chenhao Huang</p>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             );
         }

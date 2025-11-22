@@ -7,18 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        body { background-color: #050505; color: #e5e7eb; font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #000000; color: #e5e7eb; font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
         
         /* Glass Styles */
-        .glass-panel { background: rgba(30, 30, 35, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glass-bubble-user { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
-        .glass-bubble-bot { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-panel { background: rgba(20, 20, 23, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-bubble-user { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); box-shadow: 0 2px 10px rgba(124, 58, 237, 0.2); }
+        .glass-bubble-bot { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.05); }
         
         /* Mobile Optimizations */
-        .mobile-input-bar { background: rgba(10, 10, 12, 0.85); backdrop-filter: blur(25px); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .mobile-input-bar { background: rgba(5, 5, 5, 0.9); backdrop-filter: blur(30px); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 20px); }
         
         @keyframes blob { 0% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px, -20px) scale(1.1); } 100% { transform: translate(0,0) scale(1); } }
         .animate-blob { animation: blob 10s infinite ease-in-out alternate; }
@@ -40,12 +41,12 @@
             if (!content) return null;
             const parts = content.split(/(```[\s\S]*?```)/g);
             return (
-                <div className="break-words text-[14px] md:text-[15px] leading-relaxed text-gray-200 font-sans">
+                <div className="break-words text-[14px] leading-relaxed text-gray-200 font-sans">
                     {parts.map((part, index) => {
                         if (part.startsWith('```')) {
                             const match = part.match(/```(\w*)\n([\s\S]*?)```/);
                             const code = match ? match[2] : part.slice(3, -3);
-                            return <div key={index} className="bg-black/50 rounded-lg my-3 border border-white/10 overflow-x-auto p-3 font-mono text-xs text-gray-300"><code>{code}</code></div>;
+                            return <div key={index} className="bg-black/50 rounded-lg my-2 border border-white/10 overflow-x-auto p-3 font-mono text-xs text-gray-300"><code>{code}</code></div>;
                         }
                         return part.split('\n').map((line, i) => <p key={`${index}-${i}`} className="mb-1 min-h-[1em]">{line}</p>);
                     })}
@@ -57,38 +58,43 @@
             const [isOpen, setIsOpen] = useState(true);
             if (!content && !isStreaming) return null;
             return (
-                <div className="mb-3 border border-indigo-500/20 bg-indigo-500/5 rounded-xl overflow-hidden">
-                    <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between px-3 py-2 bg-indigo-500/10 text-[10px] md:text-xs text-indigo-300 font-medium">
-                        <div className="flex items-center gap-1.5">{isStreaming ? <Loader2 size={12} className="animate-spin" /> : <Brain size={12} />}<span>深度思考</span></div>
-                        {isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                <div className="mb-2 border border-indigo-500/20 bg-indigo-500/5 rounded-lg overflow-hidden">
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between px-3 py-1.5 bg-indigo-500/10 text-[10px] text-indigo-300 font-medium">
+                        <div className="flex items-center gap-1.5">{isStreaming ? <Loader2 size={10} className="animate-spin" /> : <Brain size={10} />}<span>深度思考</span></div>
+                        {isOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                     </button>
-                    {isOpen && <div className="p-3 text-indigo-200/60 text-[10px] md:text-xs font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{content}</div>}
+                    {isOpen && <div className="p-2 text-indigo-200/60 text-[10px] font-mono whitespace-pre-wrap leading-relaxed max-h-32 overflow-y-auto">{content}</div>}
                 </div>
             );
         };
 
-        const ImageDisplay = ({ url }) => {
+        const ImageDisplay = ({ url, isBase64 }) => {
             const [error, setError] = useState(false);
+            
             if (error) return (
-                <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-red-300 text-xs">
-                    <AlertTriangle size={20} />
-                    <p>图片加载失败 (防盗链或过期)</p>
-                    <a href={url} target="_blank" rel="noreferrer" className="mt-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-white flex items-center gap-1 transition-colors">
-                        <ExternalLink size={12} /> 点击直接打开
-                    </a>
+                <div className="bg-red-900/10 border border-red-500/20 rounded-xl p-3 flex flex-col items-center justify-center gap-1 text-red-400 text-xs">
+                    <AlertTriangle size={16} />
+                    <p>显示失败</p>
                 </div>
             );
+
             return (
-                <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                <div className="relative group rounded-xl overflow-hidden border border-white/10 bg-black/20 max-w-full">
                     <img 
                         src={url} 
                         alt="Generated" 
-                        className="w-full h-auto max-h-[400px] object-contain" 
+                        className="w-full h-auto max-h-[300px] object-contain bg-black/40" 
                         referrerPolicy="no-referrer" 
                         onError={() => setError(true)}
                     />
-                    <a href={url} target="_blank" rel="noreferrer" className="absolute bottom-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Download size={16} />
+                    <a 
+                        href={url} 
+                        download={isBase64 ? "generated-image.png" : undefined}
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="absolute bottom-2 right-2 p-2 bg-black/60 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+                    >
+                        <Download size={14} />
                     </a>
                 </div>
             );
@@ -104,7 +110,7 @@
             const [useReasoning, setUseReasoning] = useState(false);
             const [images, setImages] = useState([]);
             
-            // Model Fetching State
+            // Model fetching state
             const [fetchedModels, setFetchedModels] = useState([]);
             const [isFetchingModels, setIsFetchingModels] = useState(false);
             const [modelFetchError, setModelFetchError] = useState('');
@@ -113,17 +119,22 @@
             const abortRef = useRef(null);
 
             useEffect(() => {
-                const saved = localStorage.getItem('omnichat_config_v12'); // Bump version
-                if (saved) setConfig(prev => ({ ...prev, ...JSON.parse(saved) }));
-                else setShowSettings(true);
+                const saved = localStorage.getItem('omnichat_config_v13');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (!parsed.api.imageModel) parsed.api.imageModel = DEFAULT_CONFIG.api.imageModel;
+                    if (!parsed.api.videoModel) parsed.api.videoModel = DEFAULT_CONFIG.api.videoModel;
+                    setConfig(prev => ({ ...prev, ...parsed }));
+                } else {
+                    setShowSettings(true);
+                }
             }, []);
 
-            useEffect(() => { localStorage.setItem('omnichat_config_v12', JSON.stringify(config)); }, [config]);
+            useEffect(() => { localStorage.setItem('omnichat_config_v13', JSON.stringify(config)); }, [config]);
             useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isLoading]);
 
             const updateConfig = (s, f, v) => setConfig(p => ({ ...p, [s]: { ...p[s], [f]: v } }));
             
-            // Fetch Models Logic
             const fetchAvailableModels = async () => {
                 const currentConfig = config.api;
                 if (!currentConfig.apiKey) { setModelFetchError("请填写 API Key"); return; }
@@ -134,18 +145,33 @@
                     return;
                 }
                 
-                setIsFetchingModels(true); setModelFetchError(''); setFetchedModels([]);
+                setIsFetchingModels(true); 
+                setModelFetchError(''); 
+                setFetchedModels([]);
                 
                 try {
                     let baseUrl = currentConfig.baseUrl.replace(/\/chat\/completions\/?$/, '').replace(/\/+$/, '');
-                    const res = await fetch(`${baseUrl}/models`, { method: 'GET', headers: { 'Authorization': `Bearer ${safeApiKey}` } });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-                    let models = data.data || data; // Handle different formats
-                    if (Array.isArray(models)) setFetchedModels(models.map(m => m.id || m).sort());
-                    else throw new Error('格式无法识别');
+                    const url = `${baseUrl}/models`;
+                    const response = await fetch(url, { 
+                        method: 'GET', 
+                        headers: { 'Authorization': `Bearer ${safeApiKey}` } 
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const data = await response.json();
+                    let modelsArray = [];
+                    if (data.data && Array.isArray(data.data)) modelsArray = data.data;
+                    else if (Array.isArray(data)) modelsArray = data;
+                    
+                    if (modelsArray.length > 0) {
+                        setFetchedModels(modelsArray.map(m => m.id || m).sort());
+                    } else {
+                        throw new Error('格式无法识别');
+                    }
                 } catch (err) { 
-                    setModelFetchError(err.message); 
+                    console.error("Fetch Models Error:", err);
+                    setModelFetchError(`失败: ${err.message}`); 
                 } finally { 
                     setIsFetchingModels(false); 
                 }
@@ -203,7 +229,9 @@
                         const payload = { 
                             model: mode === 'image' ? config.api.imageModel : config.api.videoModel, 
                             prompt: newMsg.content, 
-                            n: 1, size: "1024x1024" 
+                            n: 1, 
+                            size: "1024x1024",
+                            response_format: mode === 'image' ? "b64_json" : undefined 
                         };
                         if (newMsg.images.length) payload.image = newMsg.images[0];
 
@@ -214,15 +242,24 @@
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.error?.message || 'Generation failed');
                         
-                        const url = data.data?.[0]?.url || data.output?.[0] || data.url;
-                        if (!url) throw new Error('No URL in response');
+                        let mediaData = null;
+                        let isB64 = false;
+                        if (data.data?.[0]?.b64_json) {
+                            mediaData = `data:image/png;base64,${data.data[0].b64_json}`;
+                            isB64 = true;
+                        } else {
+                            mediaData = data.data?.[0]?.url || data.output?.[0] || data.url;
+                        }
+
+                        if (!mediaData) throw new Error('No image data returned');
                         
                         setMessages(p => {
                             const n = [...p];
                             const last = n[n.length-1];
                             last.isStreaming = false;
                             last.content = `生成成功: ${newMsg.content}`;
-                            last.mediaUrl = url;
+                            last.mediaUrl = mediaData;
+                            last.isBase64 = isB64;
                             return n;
                         });
                     }
@@ -242,38 +279,38 @@
             };
 
             return (
-                <div className="flex flex-col h-screen bg-[#050505] text-gray-100 overflow-hidden">
+                <div className="flex flex-col h-screen bg-[#000000] text-gray-100 overflow-hidden">
                     {/* Header */}
                     <header className="flex-none px-4 py-3 border-b border-white/10 bg-[#050505]/80 backdrop-blur-md z-30 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br shadow-lg ${mode==='chat'?'from-indigo-600 to-purple-600':mode==='image'?'from-pink-600 to-rose-600':'from-blue-600 to-cyan-600'}`}>
-                                {mode==='chat' ? <Bot size={18} /> : mode==='image' ? <Palette size={18} /> : <Film size={18} />}
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br shadow-lg ${mode==='chat'?'from-indigo-600 to-purple-600':mode==='image'?'from-pink-600 to-rose-600':'from-blue-600 to-cyan-600'}`}>
+                                {mode==='chat' ? <Bot size={16} /> : mode==='image' ? <Palette size={16} /> : <Film size={16} />}
                             </div>
                             <div>
-                                <h1 className="font-bold text-base leading-none">
+                                <h1 className="font-bold text-sm leading-none">
                                     {mode==='chat' ? (useReasoning?config.api.reasoningModel:config.api.chatModel) : (mode==='image'?config.api.imageModel:config.api.videoModel)}
                                 </h1>
-                                <p className="text-[10px] text-gray-500 font-mono mt-0.5 uppercase">{mode} MODE</p>
+                                <p className="text-[9px] text-gray-500 font-mono mt-0.5 uppercase tracking-wider">{mode} MODE</p>
                             </div>
                         </div>
-                        <button onClick={()=>setShowSettings(true)} className="p-2 hover:bg-white/10 rounded-full"><Settings size={18} /></button>
+                        <button onClick={()=>setShowSettings(true)} className="p-2 hover:bg-white/10 rounded-full"><Settings size={16} /></button>
                     </header>
 
                     {/* Messages */}
-                    <main className="flex-1 overflow-y-auto p-4 pb-32">
-                        <div className="max-w-3xl mx-auto space-y-6">
+                    <main className="flex-1 overflow-y-auto p-3 pb-32">
+                        <div className="max-w-2xl mx-auto space-y-4">
                             {messages.map((m, i) => (
-                                <div key={i} className={`flex gap-3 ${m.role==='user'?'justify-end':'justify-start'}`}>
-                                    {m.role!=='user' && <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 mt-1"><Bot size={14}/></div>}
-                                    <div className={`flex flex-col max-w-[88%] ${m.role==='user'?'items-end':'items-start'}`}>
-                                        {m.images?.map((img,k)=><img key={k} src={img} className="max-h-48 rounded-lg mb-2 border border-white/10"/>)}
-                                        <div className={`px-4 py-3 rounded-2xl text-sm ${m.role==='user'?'glass-bubble-user text-white rounded-tr-sm':'glass-bubble-bot text-gray-200 rounded-tl-sm'} shadow-sm`}>
-                                            {m.mediaUrl ? <ImageDisplay url={m.mediaUrl} /> : (
+                                <div key={i} className={`flex gap-2 ${m.role==='user'?'justify-end':'justify-start'}`}>
+                                    {m.role!=='user' && <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 mt-1"><Bot size={12}/></div>}
+                                    <div className={`flex flex-col max-w-[85%] ${m.role==='user'?'items-end':'items-start'}`}>
+                                        {m.images?.map((img,k)=><img key={k} src={img} className="max-h-32 rounded-lg mb-1 border border-white/10"/>)}
+                                        <div className={`px-3.5 py-2.5 rounded-2xl text-sm ${m.role==='user'?'glass-bubble-user text-white rounded-tr-sm':'glass-bubble-bot text-gray-300 rounded-tl-sm'} shadow-sm`}>
+                                            {m.mediaUrl ? <ImageDisplay url={m.mediaUrl} isBase64={m.isBase64} /> : (
                                                 m.content.includes('<think>') 
                                                 ? <><ThinkingBlock content={m.content.match(/<think>([\s\S]*?)<\/think>/)?.[1]} isStreaming={m.isStreaming} /><MarkdownRenderer content={m.content.replace(/<think>[\s\S]*?<\/think>/,'')} /></>
                                                 : <MarkdownRenderer content={m.content} />
                                             )}
-                                            {m.isStreaming && !m.mediaUrl && <span className="inline-block w-1.5 h-3 bg-indigo-400 animate-pulse ml-1 align-middle"/>}
+                                            {m.isError && <div className="text-[10px] opacity-70 mt-1 font-mono">请检查 Key 或模型名称</div>}
                                         </div>
                                     </div>
                                 </div>
@@ -283,89 +320,103 @@
                     </main>
 
                     {/* Bottom Input Bar */}
-                    <div className="mobile-input-bar fixed bottom-0 w-full z-40 p-2 pb-safe">
-                        <div className="max-w-3xl mx-auto space-y-2">
-                            <div className="flex justify-center gap-1 mb-1">
-                                {['chat','image','video'].map(m => (
-                                    <button key={m} onClick={()=>setMode(m)} className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all border ${mode===m ? 'bg-white/10 border-white/20 text-white' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
-                                        {m}
-                                    </button>
-                                ))}
+                    <div className="mobile-input-bar fixed bottom-0 w-full z-40 safe-bottom">
+                        <div className="max-w-2xl mx-auto p-2">
+                            <div className="flex justify-center mb-2">
+                                <div className="flex bg-black/40 rounded-full p-0.5 border border-white/10">
+                                    {['chat','image','video'].map(m => (
+                                        <button key={m} onClick={()=>setMode(m)} className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center gap-1 ${mode===m ? 'bg-white/20 text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                                            {m==='chat' && <MessageSquarePlus size={10}/>}
+                                            {m==='image' && <ImageIcon size={10}/>}
+                                            {m==='video' && <Video size={10}/>}
+                                            <span>{m}</span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
+
                             {images.length > 0 && (
-                                <div className="flex gap-2 overflow-x-auto p-2">
+                                <div className="flex gap-2 overflow-x-auto px-2 mb-1">
                                     {images.map((img, i) => (
-                                        <div key={i} className="relative flex-shrink-0"><img src={img} className="h-12 w-12 rounded-md object-cover"/><button onClick={()=>setImages(p=>p.filter((_,x)=>x!==i))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button></div>
+                                        <div key={i} className="relative flex-shrink-0"><img src={img} className="h-10 w-10 rounded-md object-cover"/><button onClick={()=>setImages(p=>p.filter((_,x)=>x!==i))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={8}/></button></div>
                                     ))}
                                 </div>
                             )}
-                            <div className="flex items-end gap-2 bg-black/40 border border-white/10 rounded-2xl p-1.5">
-                                <label className="p-2.5 text-gray-400 hover:text-white cursor-pointer"><input type="file" accept="image/*" multiple className="hidden" onChange={handleImage}/><ImageIcon size={20} /></label>
-                                <textarea value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}}} placeholder={mode==='chat'?'发送消息...':`描述${mode}内容...`} className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm py-2.5 max-h-32 resize-none placeholder-gray-600" rows={1} />
-                                {mode === 'chat' && <button onClick={()=>setUseReasoning(!useReasoning)} className={`p-2.5 rounded-xl transition-colors ${useReasoning?'text-indigo-400 bg-indigo-500/10':'text-gray-500'}`}><Brain size={20} /></button>}
-                                <button onClick={isLoading?()=>abortRef.current?.abort():handleSend} disabled={!input.trim()&&!images.length&&!isLoading} className={`p-2.5 rounded-xl transition-all ${isLoading?'bg-red-500/80':'bg-white text-black'}`}>{isLoading ? <div className="w-5 h-5 flex items-center justify-center"><div className="w-2 h-2 bg-white rounded-sm animate-pulse"/></div> : <Send size={20} />}</button>
+
+                            <div className="flex items-end gap-2 bg-black/40 border border-white/10 rounded-2xl p-1">
+                                <label className="p-2.5 text-gray-400 hover:text-white cursor-pointer active:scale-90 transition-transform"><input type="file" accept="image/*" multiple className="hidden" onChange={handleImage}/><ImageIcon size={18} /></label>
+                                <textarea
+                                    value={input}
+                                    onChange={(e)=>setInput(e.target.value)}
+                                    onKeyDown={(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}}}
+                                    placeholder={mode==='chat'?'发送消息...':`生成${mode==='image'?'图片':'视频'}提示词...`}
+                                    className="flex-1 bg-transparent border-none focus:ring-0 text-white text-sm py-2.5 max-h-24 resize-none placeholder-gray-600 leading-tight"
+                                    rows={1}
+                                />
+                                {mode === 'chat' && (
+                                    <button onClick={()=>setUseReasoning(!useReasoning)} className={`p-2 rounded-xl transition-colors mb-0.5 ${useReasoning?'text-indigo-400':'text-gray-600'}`}>
+                                        <Brain size={18} />
+                                    </button>
+                                )}
+                                <button onClick={isLoading?()=>abortRef.current?.abort():handleSend} disabled={!input.trim()&&!images.length&&!isLoading} className={`p-2 rounded-xl mb-0.5 transition-all ${isLoading?'bg-red-500/80 text-white':'bg-white text-black'}`}>
+                                    {isLoading ? <div className="w-4 h-4 rounded-sm border-2 border-current border-t-transparent animate-spin"/> : <Send size={18} />}
+                                </button>
                             </div>
                         </div>
-                        <div className="h-safe-area-bottom"></div>
                     </div>
 
                     {/* Settings Modal */}
                     {showSettings && (
-                        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center p-4 md:p-6 animate-in fade-in">
-                            <div className="w-full max-w-lg bg-[#121214] border border-white/10 rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-lg font-bold text-white">设置</h2>
-                                    <button onClick={()=>setShowSettings(false)} className="p-1 bg-white/10 rounded-full"><X size={16}/></button>
+                        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center p-4 animate-in fade-in">
+                            <div className="w-full max-w-lg bg-[#121214] border border-white/10 rounded-3xl p-5 shadow-2xl max-h-[80vh] overflow-y-auto">
+                                <div className="flex justify-between items-center mb-5">
+                                    <h2 className="text-base font-bold text-white flex items-center gap-2"><Settings size={16}/> 系统设置</h2>
+                                    <button onClick={()=>setShowSettings(false)} className="p-1 bg-white/10 rounded-full"><X size={14}/></button>
                                 </div>
                                 <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-500">API Base URL</label>
-                                        <input type="text" value={config.api.baseUrl} onChange={(e)=>updateConfig('api','baseUrl',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-500">API Key</label>
-                                        <input type="password" value={config.api.apiKey} onChange={(e)=>updateConfig('api','apiKey',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-sm" />
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">API 配置</label>
+                                        <input type="text" value={config.api.baseUrl} onChange={(e)=>updateConfig('api','baseUrl',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono mb-2" placeholder="Base URL" />
+                                        <input type="password" value={config.api.apiKey} onChange={(e)=>updateConfig('api','apiKey',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-xs text-gray-200 font-mono" placeholder="sk-..." />
                                     </div>
                                     
-                                    {/* Models Section */}
-                                    <div className="pt-2 border-t border-white/5">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <label className="text-xs font-bold text-gray-500">模型配置</label>
-                                            <button onClick={fetchAvailableModels} disabled={isFetchingModels} className="text-[10px] text-indigo-400 hover:text-white transition-colors flex items-center gap-1">
-                                                {isFetchingModels ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">模型 ID</label>
+                                            <button onClick={fetchAvailableModels} disabled={isFetchingModels} className="text-[10px] text-indigo-400 hover:text-white flex items-center gap-1 transition-colors">
+                                                {isFetchingModels ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />} 
                                                 {isFetchingModels ? '获取中...' : '刷新列表'}
                                             </button>
                                         </div>
-                                        {modelFetchError && <p className="text-[10px] text-red-400 mb-2 bg-red-900/20 p-1 rounded">{modelFetchError}</p>}
-                                        {fetchedModels.length > 0 && !modelFetchError && <p className="text-[10px] text-green-400 mb-2">✅ 已同步 {fetchedModels.length} 个模型</p>}
+                                        {modelFetchError && <p className="text-[10px] text-red-400">{modelFetchError}</p>}
+                                        {fetchedModels.length > 0 && <p className="text-[10px] text-green-400">已更新 {fetchedModels.length} 个模型</p>}
                                         
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {[
-                                                {label: 'Chat Model', key: 'chatModel'},
-                                                {label: 'Reasoning Model', key: 'reasoningModel'},
-                                                {label: 'Image Model', key: 'imageModel'},
-                                                {label: 'Video Model', key: 'videoModel'}
-                                            ].map(field => (
-                                                <div key={field.key}>
-                                                    <label className="text-[10px] text-gray-500 block mb-1">{field.label}</label>
-                                                    {fetchedModels.length > 0 && (
-                                                        <select 
-                                                            onChange={(e) => updateConfig('api', field.key, e.target.value)}
-                                                            className="w-full bg-black/30 border border-white/10 rounded-lg p-1.5 text-[10px] text-gray-300 mb-1 outline-none appearance-none"
-                                                            value={config.api[field.key]}
-                                                        >
-                                                            <option value="" disabled>选择模型...</option>
-                                                            {fetchedModels.map(m => <option key={m} value={m}>{m}</option>)}
-                                                        </select>
-                                                    )}
-                                                    <input type="text" value={config.api[field.key]} onChange={(e)=>updateConfig('api',field.key,e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-xs"/>
-                                                </div>
-                                            ))}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="text-[9px] text-gray-600 block mb-1">Chat (对话)</label>
+                                                {fetchedModels.length > 0 && <select onChange={(e)=>updateConfig('api','chatModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-1.5 text-[10px] mb-1 text-gray-300" value={config.api.chatModel}>{fetchedModels.map(m=><option key={m} value={m}>{m}</option>)}</select>}
+                                                <input type="text" value={config.api.chatModel} onChange={(e)=>updateConfig('api','chatModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-[10px]" placeholder="Chat"/>
+                                            </div>
+                                            <div>
+                                                <label className="text-[9px] text-gray-600 block mb-1">Reasoning (推理)</label>
+                                                {fetchedModels.length > 0 && <select onChange={(e)=>updateConfig('api','reasoningModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-1.5 text-[10px] mb-1 text-gray-300" value={config.api.reasoningModel}>{fetchedModels.map(m=><option key={m} value={m}>{m}</option>)}</select>}
+                                                <input type="text" value={config.api.reasoningModel} onChange={(e)=>updateConfig('api','reasoningModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-[10px]" placeholder="Reasoning"/>
+                                            </div>
+                                            <div>
+                                                <label className="text-[9px] text-gray-600 block mb-1">Image (绘画)</label>
+                                                {fetchedModels.length > 0 && <select onChange={(e)=>updateConfig('api','imageModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-1.5 text-[10px] mb-1 text-gray-300" value={config.api.imageModel}>{fetchedModels.map(m=><option key={m} value={m}>{m}</option>)}</select>}
+                                                <input type="text" value={config.api.imageModel} onChange={(e)=>updateConfig('api','imageModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-[10px]" placeholder="Image"/>
+                                            </div>
+                                            <div>
+                                                <label className="text-[9px] text-gray-600 block mb-1">Video (视频)</label>
+                                                {fetchedModels.length > 0 && <select onChange={(e)=>updateConfig('api','videoModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-1.5 text-[10px] mb-1 text-gray-300" value={config.api.videoModel}>{fetchedModels.map(m=><option key={m} value={m}>{m}</option>)}</select>}
+                                                <input type="text" value={config.api.videoModel} onChange={(e)=>updateConfig('api','videoModel',e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-[10px]" placeholder="Video"/>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={()=>setShowSettings(false)} className="w-full mt-6 bg-white text-black font-bold py-3 rounded-xl">保存配置</button>
-                                <p className="text-center text-[10px] text-gray-600 mt-4 uppercase tracking-widest">由 Chenhao Huang 制作</p>
+                                <button onClick={()=>setShowSettings(false)} className="w-full mt-6 bg-white text-black font-bold py-3 rounded-xl text-sm">完成</button>
+                                <p className="text-center text-[9px] text-gray-600 mt-4 uppercase tracking-widest">由 Chenhao Huang 制作</p>
                             </div>
                         </div>
                     )}

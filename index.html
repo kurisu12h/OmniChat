@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OmniChat Ultimate v20</title>
+    <title>OmniChat Ultimate v21</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
@@ -34,7 +34,7 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
-        import { Send, Settings, Image as ImageIcon, X, Loader2, Bot, User, Brain, ChevronDown, ChevronUp, Trash2, Link as LinkIcon, Edit3, AlertTriangle, ExternalLink, RefreshCw, Zap, Sparkles, MessageSquarePlus, Palette, Video, Film, Wand2, ChevronRight, Download, Mic, Volume2, Menu, Plus, MessageSquare, MoreHorizontal, ShieldCheck, Globe } from 'https://esm.sh/lucide-react@0.263.1';
+        import { Send, Settings, Image as ImageIcon, X, Loader2, Bot, User, Brain, ChevronDown, ChevronUp, Trash2, Link as LinkIcon, Edit3, AlertTriangle, ExternalLink, RefreshCw, Zap, Sparkles, MessageSquarePlus, Palette, Video, Film, Wand2, ChevronRight, Download, Mic, Volume2, Menu, Plus, MessageSquare, MoreHorizontal, ShieldCheck, Globe, Coffee, Heart } from 'https://esm.sh/lucide-react@0.263.1';
 
         // --- Localization Data ---
         const TRANSLATIONS = {
@@ -43,6 +43,10 @@
                 subtitle: '全能多模态 AI 工作站',
                 newChat: '新建对话',
                 settings: '设置',
+                donate: '赞助作者',
+                donateTitle: '请作者喝杯咖啡 ☕',
+                donateDesc: '如果您喜欢 OmniChat，欢迎打赏支持后续开发！您的支持是我更新的动力。',
+                scanPay: '打开 支付宝/微信 扫一扫',
                 welcome: '开始一个新的对话...',
                 chatMode: '对话模式',
                 imageMode: '绘图模式',
@@ -55,26 +59,22 @@
                 apiConfig: 'API 配置',
                 models: '模型配置',
                 systemPrompt: '系统人设 (System Prompt)',
-                systemPromptPlace: '例如：你是一个全能助手...',
                 save: '保存并关闭',
                 designedBy: 'Designed by Chenhao Huang',
                 refresh: '刷新列表',
                 updating: '获取中...',
                 updated: '已更新',
                 failed: '失败',
-                loaded: '已加载',
                 modelsCount: '个模型',
                 keyError: '请填写 API Key',
-                charError: 'Key 含非法字符',
                 genStart: '生成中...',
                 genSuccess: '生成成功',
                 genFail: '生成失败',
-                openImg: '打开',
                 loadFail: '加载失败',
                 retry: '重试',
                 guideTitle: '快速上手指南',
                 step1: '配置 API 密钥',
-                step1Desc: '点击设置图标，填入 API Key (支持柏拉图/OpenAI)。',
+                step1Desc: '点击设置图标，填入 API Key。',
                 step2: '多模态切换',
                 step2Desc: '自由切换 Chat/Image/Video 模式。',
                 step3: '语音与多会话',
@@ -88,7 +88,10 @@
             },
             'zh-TW': {
                 title: 'OmniChat',
-                subtitle: '全能多模態 AI 工作站',
+                donate: '贊助作者',
+                donateTitle: '請作者喝杯咖啡 ☕',
+                donateDesc: '如果您喜歡 OmniChat，歡迎打賞支持後續開發！您的支持是我更新的動力。',
+                scanPay: '開啟 支付寶/微信 掃一掃',
                 newChat: '新增對話',
                 settings: '設定',
                 welcome: '開始一個新的對話...',
@@ -103,21 +106,17 @@
                 apiConfig: 'API 配置',
                 models: '模型配置',
                 systemPrompt: '系統人設 (System Prompt)',
-                systemPromptPlace: '例如：你是一個全能助手...',
                 save: '儲存並關閉',
                 designedBy: 'Designed by Chenhao Huang',
                 refresh: '重新整理',
                 updating: '獲取中...',
                 updated: '已更新',
                 failed: '失敗',
-                loaded: '已加載',
                 modelsCount: '個模型',
                 keyError: '請填寫 API Key',
-                charError: 'Key 含非法字符',
                 genStart: '生成中...',
                 genSuccess: '生成成功',
                 genFail: '生成失敗',
-                openImg: '開啟',
                 loadFail: '加載失敗',
                 retry: '重試',
                 guideTitle: '快速上手指南',
@@ -136,7 +135,10 @@
             },
             'en-US': {
                 title: 'OmniChat',
-                subtitle: 'All-in-One AI Workspace',
+                donate: 'Sponsor',
+                donateTitle: 'Buy me a Coffee ☕',
+                donateDesc: 'If you like OmniChat, consider supporting its development! Your support keeps updates coming.',
+                scanPay: 'Scan with Alipay / WeChat',
                 newChat: 'New Chat',
                 settings: 'Settings',
                 welcome: 'Start a new conversation...',
@@ -151,21 +153,17 @@
                 apiConfig: 'API Configuration',
                 models: 'Model Configuration',
                 systemPrompt: 'System Prompt',
-                systemPromptPlace: 'E.g., You are a helpful assistant...',
                 save: 'Save & Close',
                 designedBy: 'Designed by Chenhao Huang',
                 refresh: 'Refresh List',
                 updating: 'Fetching...',
                 updated: 'Updated',
                 failed: 'Failed',
-                loaded: 'Loaded',
                 modelsCount: 'models',
                 keyError: 'API Key Missing',
-                charError: 'Invalid Key',
                 genStart: 'Generating...',
                 genSuccess: 'Generated',
                 genFail: 'Failed',
-                openImg: 'Open',
                 loadFail: 'Load Failed',
                 retry: 'Retry',
                 guideTitle: 'Quick Start Guide',
@@ -184,7 +182,10 @@
             },
             'ja-JP': {
                 title: 'OmniChat',
-                subtitle: 'オールインワンAIワークステーション',
+                donate: '寄付',
+                donateTitle: 'コーヒーを奢る ☕',
+                donateDesc: 'OmniChatが気に入ったら、開発をサポートしてください！',
+                scanPay: 'Alipay / WeChat でスキャン',
                 newChat: '新規チャット',
                 settings: '設定',
                 welcome: '新しい会話を始める...',
@@ -199,21 +200,17 @@
                 apiConfig: 'API設定',
                 models: 'モデル設定',
                 systemPrompt: 'システムプロンプト',
-                systemPromptPlace: '例：あなたは優秀なアシスタントです...',
                 save: '保存して閉じる',
                 designedBy: 'Designed by Chenhao Huang',
                 refresh: '更新',
                 updating: '取得中...',
                 updated: '更新完了',
                 failed: '失敗',
-                loaded: 'ロード完了',
                 modelsCount: 'モデル',
                 keyError: 'APIキーを入力してください',
-                charError: '不正な文字が含まれています',
                 genStart: '生成中...',
                 genSuccess: '生成完了',
                 genFail: '生成失敗',
-                openImg: '開く',
                 loadFail: '読込失敗',
                 retry: '再試行',
                 guideTitle: 'クイックガイド',
@@ -241,10 +238,64 @@
                 isCustom: true 
             },
             gemini: { apiKey: '', isEnabled: true },
-            language: 'zh-CN' // Default Language
+            language: 'zh-CN'
         };
 
         // --- Components ---
+        
+        // 新增：捐赠弹窗
+        const DonationModal = ({ onClose, t }) => {
+            // 注意：这里使用了一个占位符图片地址。
+            // 请将您的二维码图片重命名为 "qr.png" 并放在与本 HTML 文件相同的文件夹中，
+            // 或者直接将下方的 src 替换为您的二维码图片的 Base64 编码或网络链接。
+            const qrCodeUrl = "qr.png"; // <--- 请替换这里的地址
+
+            return (
+                <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" onClick={onClose}>
+                    <div className="w-full max-w-sm bg-[#18181b] border border-amber-500/30 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col animate-fade-in-up relative" onClick={e => e.stopPropagation()}>
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400"></div>
+                        
+                        <div className="p-8 flex flex-col items-center text-center space-y-6">
+                            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20 mb-2">
+                                <Coffee size={32} className="text-white" />
+                            </div>
+                            
+                            <div>
+                                <h3 className="text-xl font-bold text-white mb-2">{t('donateTitle')}</h3>
+                                <p className="text-sm text-gray-400 leading-relaxed px-4">{t('donateDesc')}</p>
+                            </div>
+
+                            <div className="p-1 bg-white rounded-xl">
+                                <div className="w-48 h-48 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center relative">
+                                    {/* 二维码显示区域 */}
+                                    <img 
+                                        src={qrCodeUrl} 
+                                        alt="QR Code" 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ChenhaoHuang-Donation"; // 默认兜底
+                                            // 提示用户
+                                            e.target.parentElement.classList.add("bg-gray-800");
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="text-[10px] text-gray-500 uppercase tracking-widest font-medium flex items-center gap-2">
+                                <Heart size={10} className="text-red-500 fill-red-500 animate-pulse" />
+                                {t('scanPay')}
+                            </div>
+                        </div>
+
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 rounded-full">
+                            <X size={16} />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
         const WelcomeModal = ({ onClose, t }) => {
             return (
                 <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-500">
@@ -427,6 +478,7 @@
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
             const [showWelcome, setShowWelcome] = useState(false);
+            const [showDonation, setShowDonation] = useState(false); // Donation Modal
             const [input, setInput] = useState('');
             const [isLoading, setIsLoading] = useState(false);
             const [mode, setMode] = useState('chat');
@@ -440,7 +492,7 @@
             const abortRef = useRef(null);
 
             useEffect(() => {
-                const savedConfig = localStorage.getItem('omnichat_config_v20');
+                const savedConfig = localStorage.getItem('omnichat_config_v21'); // v21
                 let initialLang = 'zh-CN';
                 if (savedConfig) {
                     const parsed = JSON.parse(savedConfig);
@@ -448,7 +500,6 @@
                     if (parsed.language) initialLang = parsed.language;
                     setConfig(prev => ({ ...prev, ...parsed, api: { ...prev.api, ...parsed.api } }));
                 } else {
-                    // Auto detect language
                     const browserLang = navigator.language;
                     if (browserLang.startsWith('zh')) initialLang = browserLang.includes('TW') || browserLang.includes('HK') ? 'zh-TW' : 'zh-CN';
                     else if (browserLang.startsWith('ja')) initialLang = 'ja-JP';
@@ -471,11 +522,10 @@
                 if (!welcomeSeen) setShowWelcome(true);
             }, []);
 
-            useEffect(() => { localStorage.setItem('omnichat_config_v20', JSON.stringify(config)); }, [config]);
+            useEffect(() => { localStorage.setItem('omnichat_config_v21', JSON.stringify(config)); }, [config]);
             useEffect(() => { if (sessions.length > 0) localStorage.setItem('omnichat_sessions_v1', JSON.stringify(sessions)); }, [sessions]);
             useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [sessions, activeSessionId, isLoading]);
 
-            // Helper for translation
             const t = (key) => {
                 const lang = config.language || 'zh-CN';
                 return TRANSLATIONS[lang][key] || TRANSLATIONS['zh-CN'][key] || key;
@@ -678,6 +728,7 @@
             return (
                 <div className="flex h-screen bg-[#000000] text-gray-100 overflow-hidden">
                     {showWelcome && <WelcomeModal onClose={closeWelcomeModal} t={t} />}
+                    {showDonation && <DonationModal onClose={() => setShowDonation(false)} t={t} />}
 
                     {/* Sidebar */}
                     <div className={`fixed inset-y-0 left-0 z-50 w-64 glass-sidebar transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 flex flex-col`}>
@@ -703,7 +754,10 @@
                                 </div>
                             ))}
                         </div>
-                        <div className="p-4 border-t border-white/5">
+                        <div className="p-3 border-t border-white/5 space-y-1">
+                            <button onClick={() => setShowDonation(true)} className="flex items-center gap-3 text-sm text-amber-400 hover:text-amber-300 transition-colors w-full p-2 rounded-lg hover:bg-amber-500/10">
+                                <Coffee size={18} /> <span>{t('donate')}</span>
+                            </button>
                             <button onClick={()=>setShowSettings(true)} className="flex items-center gap-3 text-sm text-gray-400 hover:text-white transition-colors w-full p-2 rounded-lg hover:bg-white/5">
                                 <Settings size={18} /> <span>{t('settings')}</span>
                             </button>

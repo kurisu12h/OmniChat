@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OmniChat Ultimate</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Custom Animations & Glassmorphism Styles -->
+    <style>
+        body {
+            background-color: #050505;
+            color: #e5e7eb;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* Animations */
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .animate-blob { animation: blob 10s infinite alternate; }
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+
+        /* Glass Effect Classes */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        .glass-bubble-user {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.9) 0%, rgba(124, 58, 237, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .glass-bubble-bot {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .glass-input {
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(25px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .mode-capsule-active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .mode-capsule-inactive {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.4);
+            border: 1px solid transparent;
+        }
+        .model-switcher-menu {
+            background: rgba(20, 20, 25, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- React Application Script -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+        import { Send, Settings, Image as ImageIcon, X, Loader2, Bot, User, Brain, ChevronDown, ChevronUp, Trash2, Link as LinkIcon, Edit3, AlertTriangle, ExternalLink, RefreshCw, Zap, Sparkles, MessageSquarePlus, Palette, Video, Film, Wand2, ChevronRight } from 'https://esm.sh/lucide-react@0.263.1';
+
+        // --- Constants ---
+        const MODEL_PRESETS = {
+            image: [
+                { id: 'midjourney', name: 'Midjourney V6' },
+                { id: 'dall-e-3', name: 'DALL·E 3' },
+                { id: 'flux-pro', name: 'FLUX Pro' },
+                { id: 'stable-diffusion-3', name: 'SD 3.0' }
+            ],
+            video: [
+                { id: 'luma-dream-machine', name: 'Luma Dream Machine' },
+                { id: 'runway-gen-2', name: 'Runway Gen-2' },
+                { id: 'kling', name: 'Kling (可灵)' },
+                { id: 'cogvideo', name: 'CogVideo' }
+            ]
+        };
+
+        // --- Default Configuration ---
+        const DEFAULT_CONFIG = {
+            api: {
+                name: '自定义 API',
+                baseUrl: 'https://api.bltcy.ai/v1',
+                apiKey: '',
+                chatModel: 'gpt-5.1',
+                reasoningModel: 'deepseek-reasoner',
+                imageModel: 'midjourney',
+                videoModel: 'luma-dream-machine',
+                icon: '⚡',
+                color: 'text-indigo-400',
+                isCustom: true
+            },
+            gemini: {
+                apiKey: '',
+                isEnabled: true
+            }
+        };
+
+        // --- Helper: Markdown Renderer ---
+        const MarkdownRenderer = ({ content }) => {
+            if (!content) return null;
+            const parts = content.split(/(```[\s\S]*?```)/g);
+            return (
+                <div className="break-words text-sm md:text-[15px] leading-relaxed text-gray-200/90 font-sans tracking-wide">
+                {parts.map((part, index) => {
+                    if (part.startsWith('```')) {
+                    const match = part.match(/```(\w*)\n([\s\S]*?)```/);
+                    const lang = match ? match[1] : '';
+                    const code = match ? match[2] : part.slice(3, -3);
+                    return (
+                        <div key={index} className="bg-black/40 rounded-xl overflow-hidden my-4 border border-white/5 shadow-inner group">
+                        <div className="flex items-center justify-between bg-white/5 px-4 py-2 border-b border-white/5">
+                            <span className="text-[10px] text-gray-400 font-mono font-bold uppercase tracking-widest">{lang || 'CODE'}</span>
+                            <button onClick={() => navigator.clipboard.writeText(code)} className="text-[10px] text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1">Copy</button>
+                        </div>
+                        <pre className="p-4 overflow-x-auto text-gray-300 font-mono text-xs md:text-sm whitespace-pre-wrap"><code>{code}</code></pre>
+                        </div>
+                    );
+                    }
+                    const lines = part.split('\n');
+                    return lines.map((line, lineIdx) => {
+                        if (line.trim() === '') return <div key={`${index}-${lineIdx}`} className="h-3"></div>;
+                        const parseInline = (text) => {
+                            const segments = text.split(/(\*\*.*?\*\*|`.*?`)/g);
+                            return segments.map((seg, i) => {
+                                if (seg.startsWith('**') && seg.endsWith('**')) return <strong key={i} className="text-white font-bold">{seg.slice(2, -2)}</strong>;
+                                if (seg.startsWith('`') && seg.endsWith('`')) return <code key={i} className="bg-white/10 text-indigo-300 px-1.5 py-0.5 rounded text-xs font-mono border border-white/5">{seg.slice(1, -1)}</code>;
+                                return seg;
+                            });
+                        };
+                        const trimmed = line.trim();
+                        if (trimmed.startsWith('# ')) return <h1 key={`${index}-${lineIdx}`} className="text-2xl font-bold text-white mt-6 mb-3 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">{parseInline(trimmed.slice(2))}</h1>;
+                        if (trimmed.startsWith('## ')) return <h2 key={`${index}-${lineIdx}`} className="text-xl font-bold text-white mt-5 mb-3">{parseInline(trimmed.slice(3))}</h2>;
+                        if (trimmed.startsWith('### ')) return <h3 key={`${index}-${lineIdx}`} className="text-lg font-bold text-white mt-4 mb-2">{parseInline(trimmed.slice(4))}</h3>;
+                        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) return <div key={`${index}-${lineIdx}`} className="flex gap-2 ml-1 mb-1"><span className="text-indigo-400 font-bold">•</span><span className="flex-1">{parseInline(trimmed.slice(2))}</span></div>;
+                        const orderedMatch = trimmed.match(/^(\d+)\.\s(.*)/);
+                        if (orderedMatch) return <div key={`${index}-${lineIdx}`} className="flex gap-2 ml-1 mb-1"><span className="text-indigo-400 font-mono text-right">{orderedMatch[1]}.</span><span className="flex-1">{parseInline(orderedMatch[2])}</span></div>;
+                        if (trimmed.startsWith('> ')) return <div key={`${index}-${lineIdx}`} className="border-l-2 border-indigo-500/50 pl-4 py-1 my-2 text-gray-400 italic bg-white/5 rounded-r-lg">{parseInline(trimmed.slice(2))}</div>;
+                        return <p key={`${index}-${lineIdx}`} className="mb-1">{parseInline(line)}</p>;
+                    });
+                })}
+                </div>
+            );
+        };
+
+        // --- Component: Deep Thinking Block ---
+        const ThinkingBlock = ({ content, isStreaming }) => {
+            const [isOpen, setIsOpen] = useState(true);
+            if (!content && !isStreaming) return null;
+            return (
+                <div className="mb-4 border border-indigo-400/20 bg-indigo-500/5 rounded-2xl overflow-hidden backdrop-blur-sm animate-in fade-in duration-500">
+                <button onClick={() => setIsOpen(!isOpen)} className="w-full flex items-center justify-between px-4 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors text-xs text-indigo-300 font-medium tracking-wide">
+                    <div className="flex items-center gap-2">
+                    {isStreaming ? <Loader2 size={14} className="animate-spin" /> : <Brain size={14} />}
+                    <span>深度思考 {isStreaming ? '进行中...' : '完成'}</span>
+                    </div>
+                    {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+                {isOpen && (
+                    <div className="p-4 text-indigo-100/70 text-xs md:text-sm border-t border-indigo-500/10 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto custom-scrollbar">
+                    {content}
+                    {isStreaming && <span className="inline-block w-2 h-4 align-middle bg-indigo-400 animate-pulse ml-1"/>}
+                    </div>
+                )}
+                </div>
+            );
+        };
+
+        // --- Main App Component ---
+        function OmniChat() {
+            const [config, setConfig] = useState(DEFAULT_CONFIG);
+            const [messages, setMessages] = useState([]);
+            const [input, setInput] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [showModelSwitcher, setShowModelSwitcher] = useState(false);
+            const [useReasoning, setUseReasoning] = useState(false);
+            const [mode, setMode] = useState('chat'); 
+            const [images, setImages] = useState([]); 
+            const [suggestions, setSuggestions] = useState([]);
+            const [isEnhancing, setIsEnhancing] = useState(false);
+            const [isSuggesting, setIsSuggesting] = useState(false);
+            const [fetchedModels, setFetchedModels] = useState([]);
+            const [isFetchingModels, setIsFetchingModels] = useState(false);
+            const [modelFetchError, setModelFetchError] = useState('');
+            const messagesEndRef = useRef(null);
+            const abortControllerRef = useRef(null); 
+
+            useEffect(() => {
+                const savedConfig = localStorage.getItem('omnichat_config_v10');
+                if (savedConfig) {
+                    const parsed = JSON.parse(savedConfig);
+                    if (!parsed.api.imageModel) parsed.api.imageModel = DEFAULT_CONFIG.api.imageModel;
+                    if (!parsed.api.videoModel) parsed.api.videoModel = DEFAULT_CONFIG.api.videoModel;
+                    setConfig(prev => ({ ...prev, ...parsed }));
+                } else {
+                    setShowSettings(true);
+                }
+            }, []);
+
+            useEffect(() => { localStorage.setItem('omnichat_config_v10', JSON.stringify(config)); }, [config]);
+            useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, isLoading, suggestions]);
+
+            useEffect(() => {
+                if (!isLoading && messages.length > 0 && mode === 'chat') {
+                    const lastMsg = messages[messages.length - 1];
+                    if (lastMsg.role === 'assistant' && !lastMsg.isError && config.gemini?.apiKey && config.gemini?.isEnabled && !lastMsg.type) {
+                        generateSuggestions();
+                    }
+                }
+            }, [isLoading, messages.length, mode]);
+
+            const updateConfig = (section, field, value) => setConfig(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
+
+            const handleImageUpload = (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setImages(prev => [...prev, reader.result]);
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const removeImage = (index) => setImages(prev => prev.filter((_, i) => i !== index));
+
+            const callGeminiFlash = async (prompt, systemInstruction = "") => {
+                const apiKey = config.gemini.apiKey?.trim();
+                if (!apiKey) return null;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            systemInstruction: { parts: [{ text: systemInstruction }] },
+                            generationConfig: { temperature: 0.7, maxOutputTokens: 200 }
+                        })
+                    });
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (e) { console.error("Gemini Error:", e); return null; }
+            };
+
+            const handleEnhanceInput = async () => {
+                if (!input.trim() || isEnhancing || !config.gemini.apiKey) {
+                    if (!config.gemini.apiKey) alert("需配置 Gemini API Key");
+                    return;
+                }
+                setIsEnhancing(true);
+                const enhanced = await callGeminiFlash(input, "Expand user's input into a clear, descriptive prompt suitable for AI generation. Keep language same.");
+                if (enhanced) setInput(enhanced.trim());
+                setIsEnhancing(false);
+            };
+
+            const generateSuggestions = async () => {
+                setIsSuggesting(true);
+                const context = messages.slice(-3).map(m => `${m.role}: ${m.content}`).join('\n');
+                const res = await callGeminiFlash(`Context:\n${context}\nSuggest 3 follow-ups JSON array string.`, "Strict JSON output.");
+                if (res) {
+                    try {
+                        const cleanJson = res.replace(/```json|```/g, '').trim();
+                        const parsed = JSON.parse(cleanJson);
+                        if (Array.isArray(parsed)) setSuggestions(parsed.slice(0, 3));
+                    } catch (e) {}
+                }
+                setIsSuggesting(false);
+            };
+
+            const fetchAvailableModels = async () => {
+                const currentConfig = config.api;
+                if (!currentConfig.apiKey) { setModelFetchError("请填写 API Key"); return; }
+                
+                const safeApiKey = currentConfig.apiKey.trim();
+                if (/[^\x00-\x7F]/.test(safeApiKey)) {
+                    setModelFetchError("API Key 包含非法字符");
+                    return;
+                }
+                
+                setIsFetchingModels(true); 
+                setModelFetchError(''); 
+                setFetchedModels([]);
+                
+                try {
+                    let baseUrl = currentConfig.baseUrl.replace(/\/chat\/completions\/?$/, '').replace(/\/+$/, '');
+                    const url = `${baseUrl}/models`;
+                    const response = await fetch(url, { 
+                        method: 'GET', 
+                        headers: { 
+                            'Authorization': `Bearer ${safeApiKey}` 
+                        } 
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+                    
+                    const data = await response.json();
+                    let modelsArray = [];
+                    if (data.data && Array.isArray(data.data)) {
+                        modelsArray = data.data;
+                    } else if (Array.isArray(data)) {
+                        modelsArray = data;
+                    }
+                    
+                    if (modelsArray.length > 0) {
+                        setFetchedModels(modelsArray.map(m => m.id || m).sort());
+                    } else {
+                        throw new Error('返回格式无法识别');
+                    }
+                } catch (err) { 
+                    console.error("Fetch Models Error:", err);
+                    setModelFetchError(`获取失败: ${err.message}`); 
+                } finally { 
+                    setIsFetchingModels(false); 
+                }
+            };
+
+            const streamOpenAI = async (currentMessages, activeModel, apiKey, baseUrl, onChunk, onError) => {
+                const safeApiKey = apiKey?.trim();
+                if (!safeApiKey) { onError(new Error("API Key为空")); return; }
+
+                let safeBaseUrl = baseUrl.replace(/\/+$/, ''); 
+                let endpoint = safeBaseUrl.endsWith('/chat/completions') ? safeBaseUrl : `${safeBaseUrl}/chat/completions`;
+                const formattedMessages = currentMessages.map(msg => {
+                    if (msg.images?.length > 0) return { role: msg.role, content: [{ type: "text", text: msg.content }, ...msg.images.map(img => ({ type: "image_url", image_url: { url: img } }))] };
+                    return { role: msg.role, content: msg.content };
+                });
+                abortControllerRef.current = new AbortController();
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${safeApiKey}` },
+                        body: JSON.stringify({ model: activeModel, messages: formattedMessages, stream: true }),
+                        signal: abortControllerRef.current.signal
+                    });
+                    if (!response.ok) throw new Error(`API Error (${response.status})`);
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let accumulatedContent = "", accumulatedReasoning = "";
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+                        for (const line of lines) {
+                            if (!line.startsWith('data: ') || line.includes('[DONE]')) continue;
+                            try {
+                                const delta = JSON.parse(line.replace('data: ', '')).choices?.[0]?.delta;
+                                if (delta) {
+                                    if (delta.reasoning_content) accumulatedReasoning += delta.reasoning_content;
+                                    if (delta.content) accumulatedContent += delta.content;
+                                    onChunk(accumulatedReasoning ? `<think>${accumulatedReasoning}</think>\n${accumulatedContent}` : accumulatedContent);
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                } catch (error) { if (error.name !== 'AbortError') onError(error); }
+            };
+
+            const generateMedia = async (type, prompt, apiKey, baseUrl, onComplete, onError) => {
+                const safeApiKey = apiKey?.trim();
+                if (!safeApiKey) { onError(new Error("API Key为空")); return; }
+
+                let safeBaseUrl = baseUrl.replace(/\/+$/, '');
+                const endpoint = type === 'image' 
+                    ? `${safeBaseUrl}/images/generations` 
+                    : `${safeBaseUrl}/videos/generations`;
+                
+                const model = type === 'image' ? config.api.imageModel : config.api.videoModel;
+
+                const payload = {
+                    model: model,
+                    prompt: prompt,
+                    n: 1,
+                    size: "1024x1024"
+                };
+
+                if (images.length > 0) {
+                    payload.image = images[0]; 
+                }
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${safeApiKey}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error?.message || `API Error ${response.status}`);
+                    }
+
+                    const resultUrl = data.data?.[0]?.url || data.output?.[0] || data.url;
+                    if (!resultUrl) throw new Error("No URL returned from API");
+                    
+                    onComplete(resultUrl);
+
+                } catch (error) {
+                    onError(error);
+                }
+            };
+
+            const handleSend = async (manualInput = null) => {
+                const textToSend = manualInput || input;
+                if ((!textToSend.trim() && images.length === 0) || isLoading) return;
+                if (!config.api.apiKey) { setShowSettings(true); return; }
+
+                const newMessage = { role: 'user', content: textToSend, images: [...images] };
+                const newHistory = [...messages, newMessage];
+                setMessages(newHistory); setInput(''); setImages([]); setSuggestions([]); setIsLoading(true);
+                
+                if (mode === 'chat') {
+                    setMessages(prev => [...prev, { role: 'assistant', content: '', isStreaming: true }]);
+                    await streamOpenAI(newHistory, useReasoning ? config.api.reasoningModel : config.api.chatModel, config.api.apiKey, config.api.baseUrl, 
+                        (updatedContent) => setMessages(prev => { const n = [...prev]; if(n[n.length-1].role === 'assistant') n[n.length-1].content = updatedContent; return n; }),
+                        (error) => setMessages(prev => { const n = [...prev]; n[n.length-1].isError=true; n[n.length-1].content+=`\n❌ ${error.message}`; n[n.length-1].isStreaming=false; return n; })
+                    );
+                    setIsLoading(false); setMessages(prev => { const n = [...prev]; n[n.length-1].isStreaming=false; return n; });
+                
+                } else {
+                    const typeLabel = mode === 'image' ? '绘画' : '视频';
+                    const currentModel = mode === 'image' ? config.api.imageModel : config.api.videoModel;
+                    setMessages(prev => [...prev, { role: 'assistant', content: `🎨 正在生成${typeLabel}中... (使用模型: ${currentModel})`, isStreaming: true, type: mode, prompt: textToSend }]); 
+                    
+                    await generateMedia(mode, textToSend, config.api.apiKey, config.api.baseUrl,
+                        (url) => {
+                            setMessages(prev => {
+                                const n = [...prev];
+                                const lastMsg = n[n.length-1];
+                                lastMsg.isStreaming = false;
+                                lastMsg.content = `✅ ${typeLabel}生成完成: ${textToSend}`;
+                                lastMsg.mediaUrl = url;
+                                return n;
+                            });
+                        },
+                        (error) => {
+                            setMessages(prev => {
+                                const n = [...prev];
+                                const lastMsg = n[n.length-1];
+                                lastMsg.isError = true;
+                                lastMsg.content = `❌ ${typeLabel}生成失败: ${error.message}`;
+                                lastMsg.isStreaming = false;
+                                return n;
+                            });
+                        }
+                    );
+                    setIsLoading(false);
+                }
+            };
+
+            const handleRetry = (prompt, type) => {
+                if (type) setMode(type);
+                setInput(prompt);
+                handleSend(prompt);
+            };
+
+            const renderMessageContent = (msg) => {
+                if (msg.mediaUrl) {
+                    return (
+                        <div className="space-y-3">
+                        <p className="text-sm text-gray-300 font-medium">{msg.content}</p>
+                        {msg.type === 'image' ? (
+                            <div className="relative group overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+                                <img src={msg.mediaUrl} alt="Generated" className="w-full h-auto max-h-[500px] object-cover" />
+                                <a href={msg.mediaUrl} target="_blank" rel="noreferrer" className="absolute bottom-3 right-3 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <ExternalLink size={16} />
+                                </a>
+                            </div>
+                        ) : (
+                            <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                                <video controls src={msg.mediaUrl} className="w-full max-h-[500px]" />
+                            </div>
+                        )}
+                        </div>
+                    );
+                }
+
+                const thinkMatch = msg.content.match(/<think>([\s\S]*?)(?:<\/think>|$)/);
+                let contentNode;
+                if (thinkMatch) {
+                    const reasoningDone = msg.content.includes('</think>');
+                    contentNode = <><ThinkingBlock content={thinkMatch[1]} isStreaming={msg.isStreaming && !reasoningDone} /><MarkdownRenderer content={msg.content.replace(/<think>[\s\S]*?(?:<\/think>|$)/, '').trim()} />{msg.isStreaming && reasoningDone && <span className="inline-block w-2 h-4 align-middle bg-indigo-400 animate-pulse ml-1"/>}</>;
+                } else {
+                    contentNode = <><MarkdownRenderer content={msg.content} />{msg.isStreaming && <span className="inline-block w-2 h-4 align-middle bg-indigo-400 animate-pulse ml-1"/>}</>;
+                }
+
+                return (
+                    <div className="flex flex-col gap-2">
+                        {contentNode}
+                        {msg.isError && msg.prompt && (
+                            <div className="flex gap-2 mt-1">
+                                <button 
+                                onClick={() => handleRetry(msg.prompt, msg.type)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-xs transition-colors"
+                                >
+                                <RefreshCw size={12} /> 重试
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const currentModelName = mode === 'chat' 
+                ? (useReasoning ? config.api.reasoningModel : config.api.chatModel).toUpperCase()
+                : (mode === 'image' ? config.api.imageModel : config.api.videoModel).toUpperCase();
+
+            return (
+                <div className="flex flex-col h-screen relative overflow-hidden font-sans text-gray-100 bg-[#050505]" onClick={() => setShowModelSwitcher(false)}>
+                
+                {/* Liquid Background */}
+                <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob"></div>
+                    <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-2000"></div>
+                    <div className="absolute -bottom-32 left-1/3 w-96 h-96 bg-indigo-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-blob animation-delay-4000"></div>
+                    <div className="absolute inset-0 bg-[url('[https://grainy-gradients.vercel.app/noise.svg](https://grainy-gradients.vercel.app/noise.svg)')] opacity-10"></div>
+                </div>
+
+                {/* Glass Header */}
+                <header className="relative z-20 flex items-center justify-between px-6 py-4 glass-panel border-b-0 m-4 rounded-3xl">
+                    <div className="flex items-center gap-4">
+                    <div className={`p-2.5 rounded-2xl bg-gradient-to-br shadow-lg shadow-indigo-500/20 ${mode === 'chat' ? 'from-indigo-500 to-purple-600' : mode === 'image' ? 'from-pink-500 to-rose-600' : 'from-blue-500 to-cyan-600'}`}>
+                        {mode === 'chat' && <Bot size={22} className="text-white" />}
+                        {mode === 'image' && <Palette size={22} className="text-white" />}
+                        {mode === 'video' && <Film size={22} className="text-white" />}
+                    </div>
+                    <div className="flex flex-col">
+                        <h1 className="font-bold text-xl tracking-tight text-white/90 leading-none font-mono">
+                        {currentModelName}
+                        </h1>
+                        <div className="flex items-center gap-2 mt-1.5">
+                        <span className="relative flex h-2 w-2">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isLoading ? 'bg-yellow-400' : 'bg-green-400'}`}></span>
+                            <span className={`relative inline-flex rounded-full h-2 w-2 ${isLoading ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                            </span>
+                        <span className="text-[10px] text-gray-400 font-medium tracking-widest uppercase">
+                            {mode === 'chat' ? (useReasoning ? 'REASONING' : 'CHAT') : mode} READY
+                        </span>
+                        </div>
+                    </div>
+                    </div>
+                    <button onClick={() => setShowSettings(true)} className="p-3 hover:bg-white/10 rounded-full transition-all text-white/70 hover:text-white backdrop-blur-md border border-white/5">
+                        <Settings size={20} />
+                    </button>
+                </header>
+
+                {/* Main Chat */}
+                <main className="flex-1 relative z-10 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                    <div className="max-w-4xl mx-auto space-y-8 pb-8">
+                    {messages.length === 0 && (
+                        <div className="flex flex-col items-center justify-center min-h-[60vh] select-none animate-in fade-in zoom-in-95 duration-700">
+                        <div className="relative mb-8">
+                            <div className="w-28 h-28 glass-panel rounded-[2rem] flex items-center justify-center border border-white/10 shadow-[0_0_50px_-12px_rgba(99,102,241,0.3)]">
+                            {mode === 'chat' && <Zap size={56} className="text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.5)]" />}
+                            {mode === 'image' && <Palette size={56} className="text-pink-400 drop-shadow-[0_0_15px_rgba(244,114,182,0.5)]" />}
+                            {mode === 'video' && <Film size={56} className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]" />}
+                            </div>
+                            {config.gemini.apiKey && (
+                            <div className="absolute -top-3 -right-3 p-2 bg-yellow-400/10 border border-yellow-400/30 rounded-full backdrop-blur-md animate-bounce">
+                                <Sparkles size={18} className="text-yellow-400" />
+                            </div>
+                            )}
+                        </div>
+                        <h2 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-white via-indigo-200 to-indigo-400 mb-4 font-mono tracking-tight text-center drop-shadow-sm">
+                            {mode === 'chat' ? 'OmniChat' : mode === 'image' ? 'OmniImagine' : 'OmniVideo'}
+                        </h2>
+                        <p className="text-white/40 text-sm tracking-widest font-medium uppercase mb-8">
+                            {mode === 'chat' ? 'Advanced Reasoning & Chat' : mode === 'image' ? 'Text / Image to Image Generation' : 'Text / Image to Video Generation'}
+                        </p>
+                        </div>
+                    )}
+
+                    {messages.map((msg, idx) => (
+                        <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group animate-in slide-in-from-bottom-4 duration-500`}>
+                        {msg.role !== 'user' && (
+                            <div className="w-10 h-10 rounded-2xl glass-panel flex items-center justify-center flex-shrink-0 mt-1">
+                            {msg.type === 'image' ? <Palette size={18} className="text-pink-300" /> : msg.type === 'video' ? <Film size={18} className="text-cyan-300" /> : <Bot size={18} className="text-indigo-300" />}
+                            </div>
+                        )}
+                        <div className={`flex flex-col max-w-[85%] md:max-w-[75%] space-y-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                            {msg.images?.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {msg.images.map((img, i) => <img key={i} src={img} alt="img" className="max-h-60 rounded-2xl glass-panel" />)}
+                            </div>
+                            )}
+                            <div className={`px-6 py-4 rounded-[2rem] shadow-xl ${msg.role === 'user' ? 'glass-bubble-user text-white rounded-br-sm' : 'glass-bubble-bot text-gray-100 rounded-bl-sm'}`}>
+                            {msg.role === 'user' ? <p className="whitespace-pre-wrap leading-relaxed text-[15px] font-medium">{msg.content}</p> : renderMessageContent(msg)}
+                            {msg.isError && <p className="text-red-400 text-xs mt-2 font-mono bg-red-900/20 p-2 rounded-lg leading-relaxed">{msg.content}</p>}
+                            </div>
+                        </div>
+                        {msg.role === 'user' && (
+                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 mt-1 shadow-lg shadow-indigo-500/20">
+                            <User size={18} className="text-white" />
+                            </div>
+                        )}
+                        </div>
+                    ))}
+
+                    {!isLoading && suggestions.length > 0 && mode === 'chat' && (
+                        <div className="flex flex-col items-start gap-3 ml-14 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="flex items-center gap-2 text-[10px] text-indigo-300/60 uppercase tracking-widest font-bold ml-1">
+                            <Sparkles size={10} /> Suggested
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                            {suggestions.map((s, i) => (
+                                <button key={i} onClick={() => handleSend(s)} className="px-4 py-2 glass-panel rounded-full text-xs text-indigo-200 hover:text-white hover:bg-white/5 transition-all border border-indigo-500/20 hover:border-indigo-400/40">
+                                    {s}
+                                </button>
+                            ))}
+                            </div>
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                    </div>
+                </main>
+
+                {/* Floating Input Bar */}
+                <div className="relative z-20 p-4 md:p-6 mb-2">
+                    <div className="max-w-4xl mx-auto glass-input rounded-[2.5rem] p-2 shadow-2xl relative border border-white/10">
+                    
+                    {/* Mode Switcher Pill */}
+                    <div className="absolute -top-14 left-0 right-0 flex justify-center">
+                        <div className="glass-panel rounded-full p-1 flex gap-1">
+                            <button onClick={() => { setMode('chat'); setShowModelSwitcher(false); }} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${mode === 'chat' ? 'mode-capsule-active' : 'mode-capsule-inactive'}`}>
+                            <MessageSquarePlus size={14} /> Chat
+                            </button>
+                            <button onClick={() => { setMode('image'); setShowModelSwitcher(false); }} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${mode === 'image' ? 'mode-capsule-active' : 'mode-capsule-inactive'}`}>
+                            <ImageIcon size={14} /> Imagine
+                            </button>
+                            <button onClick={() => { setMode('video'); setShowModelSwitcher(false); }} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${mode === 'video' ? 'mode-capsule-active' : 'mode-capsule-inactive'}`}>
+                            <Video size={14} /> Video
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Quick Model Switcher Pill */}
+                    {mode !== 'chat' && (
+                        <div className="absolute -top-24 left-4 z-30">
+                            <div 
+                            className="glass-panel rounded-xl px-3 py-2 flex items-center gap-2 cursor-pointer hover:bg-white/5 transition-all"
+                            onClick={(e) => { e.stopPropagation(); setShowModelSwitcher(!showModelSwitcher); }}
+                            >
+                            {mode === 'image' ? <Palette size={14} className="text-pink-400" /> : <Film size={14} className="text-cyan-400" />}
+                            <span className="text-xs text-gray-300 font-mono">{mode === 'image' ? config.api.imageModel : config.api.videoModel}</span>
+                            <ChevronDown size={12} className="text-gray-500" />
+                            </div>
+                            
+                            {showModelSwitcher && (
+                            <div className="absolute top-full left-0 mt-2 w-48 model-switcher-menu rounded-xl overflow-hidden z-40 animate-in fade-in zoom-in-95">
+                                <div className="p-1.5">
+                                    {(mode === 'image' ? MODEL_PRESETS.image : MODEL_PRESETS.video).map((m) => (
+                                        <button 
+                                        key={m.id}
+                                        className="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex justify-between items-center group"
+                                        onClick={() => { 
+                                            updateConfig('api', mode === 'image' ? 'imageModel' : 'videoModel', m.id);
+                                            setShowModelSwitcher(false);
+                                        }}
+                                        >
+                                        {m.name}
+                                        {(mode === 'image' ? config.api.imageModel : config.api.videoModel) === m.id && <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"></div>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            )}
+                        </div>
+                    )}
+
+                    {images.length > 0 && (
+                        <div className="absolute -top-24 left-4 flex gap-3 p-2 glass-panel rounded-2xl">
+                        {images.map((img, i) => (
+                            <div key={i} className="relative group">
+                            <img src={img} alt="preview" className="h-16 w-16 object-cover rounded-xl" />
+                            <button onClick={() => removeImage(i)} className="absolute -top-2 -right-2 bg-red-500/80 hover:bg-red-500 text-white rounded-full p-1 backdrop-blur-sm transition-all scale-0 group-hover:scale-100"><X size={10} /></button>
+                            </div>
+                        ))}
+                        </div>
+                    )}
+                    
+                    <div className="flex items-end gap-2">
+                        <div className="flex items-center gap-1 pl-2 pb-2">
+                        <label className="p-3 text-indigo-300 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-all">
+                            <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
+                            <ImageIcon size={22} />
+                        </label>
+                        <button onClick={handleEnhanceInput} disabled={!input.trim() || isEnhancing || !config.gemini.apiKey} className={`p-3 rounded-full transition-all ${config.gemini.apiKey && input.trim() ? 'text-indigo-300 hover:text-white hover:bg-white/10' : 'text-gray-600 opacity-50'}`}>
+                            {isEnhancing ? <Loader2 size={22} className="animate-spin" /> : <Wand2 size={22} />}
+                        </button>
+                        </div>
+
+                        <textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                        placeholder={mode === 'chat' ? `Message ${config.api.chatModel}...` : mode === 'image' ? `Describe image for ${config.api.imageModel}...` : `Describe video for ${config.api.videoModel}...`}
+                        className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-500/70 resize-none py-3.5 max-h-40 text-[15px] font-medium leading-relaxed"
+                        rows={1}
+                        />
+                        
+                        <div className="flex items-center gap-2 pr-2 pb-2">
+                        {mode === 'chat' && (
+                            <button onClick={() => setUseReasoning(!useReasoning)} className={`p-3 rounded-full transition-all flex items-center justify-center ${useReasoning ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'text-gray-400 hover:text-white hover:bg-white/10'}`} title="Deep Think">
+                                <Brain size={22} />
+                            </button>
+                        )}
+                        <button onClick={isLoading ? () => abortControllerRef.current?.abort() : () => handleSend()} disabled={!isLoading && !input.trim() && images.length === 0} className={`p-3 rounded-full transition-all flex items-center justify-center ${isLoading ? 'bg-red-500/80 hover:bg-red-500 text-white' : 'bg-white text-black hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.3)] disabled:opacity-50 disabled:shadow-none'}`}>
+                            {isLoading ? <span className="w-3 h-3 bg-white rounded-[2px] animate-pulse" /> : <Send size={22} className="" />} 
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+                    <p className="text-center text-[10px] text-gray-500/50 mt-3 font-medium uppercase tracking-widest">Powered by Plato & Gemini</p>
+                </div>
+
+                {/* Liquid Glass Settings Modal */}
+                {showSettings && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-[20px] z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
+                    <div className="glass-panel w-full max-w-lg rounded-[2.5rem] shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300 border border-white/10">
+                        <div className="flex justify-between items-center p-8 border-b border-white/5">
+                        <h2 className="text-2xl font-bold flex items-center gap-3 text-white tracking-tight">
+                            <div className="p-2 bg-indigo-500/20 rounded-xl"><Settings size={20} className="text-indigo-400" /></div>
+                            System Config
+                        </h2>
+                        <button onClick={() => setShowSettings(false)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-white/70 hover:text-white transition-all"><X size={20} /></button>
+                        </div>
+                        <div className="p-8 overflow-y-auto custom-scrollbar space-y-8">
+                        <div className="space-y-4">
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2"><Zap size={14} /> Core API</h3>
+                            <div className="grid gap-5 p-6 bg-black/20 rounded-3xl border border-white/5">
+                                <div><label className="text-xs font-medium text-gray-400 ml-1 mb-2 block">Base URL</label><input type="text" value={config.api.baseUrl} onChange={(e) => updateConfig('api', 'baseUrl', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-1 focus:ring-indigo-500/50 outline-none font-mono transition-all focus:bg-black/50" /></div>
+                                <div><label className="text-xs font-medium text-gray-400 ml-1 mb-2 block">API Key</label><input type="password" value={config.api.apiKey} onChange={(e) => updateConfig('api', 'apiKey', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:ring-1 focus:ring-indigo-500/50 outline-none font-mono transition-all focus:bg-black/50" /></div>
+                                
+                                {/* Models Grid */}
+                                <div className="grid grid-cols-2 gap-4">
+                                <div className="col-span-2 flex justify-between items-center border-b border-white/5 pb-2 mb-2">
+                                    <label className="text-[10px] font-bold text-gray-500 uppercase">Models Configuration</label>
+                                    <div className="flex items-center gap-2">
+                                        {modelFetchError && <span className="text-[10px] text-red-400">{modelFetchError}</span>}
+                                        {fetchedModels.length > 0 && !modelFetchError && <span className="text-[10px] text-green-400">Updated ({fetchedModels.length})</span>}
+                                        <button onClick={fetchAvailableModels} className="text-[10px] text-indigo-400 hover:text-white transition-colors">
+                                            {isFetchingModels ? <Loader2 size={10} className="animate-spin" /> : 'Refresh List'}
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                {/* Chat */}
+                                <div>
+                                    <label className="text-[10px] font-medium text-gray-400 ml-1 mb-1 block">Chat Model</label>
+                                    {fetchedModels.length > 0 && <select onChange={(e) => updateConfig('api', 'chatModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg py-1 px-2 text-[10px] text-gray-300 mb-1 outline-none" value={config.api.chatModel}>{fetchedModels.map(m => <option key={m} value={m}>{m}</option>)}</select>}
+                                    <input type="text" value={config.api.chatModel} onChange={(e) => updateConfig('api', 'chatModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-2 px-3 text-xs text-white outline-none font-mono" />
+                                </div>
+                                {/* Reasoning */}
+                                <div>
+                                    <label className="text-[10px] font-medium text-gray-400 ml-1 mb-1 block">Reasoning (R1)</label>
+                                    {fetchedModels.length > 0 && <select onChange={(e) => updateConfig('api', 'reasoningModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg py-1 px-2 text-[10px] text-gray-300 mb-1 outline-none" value={config.api.reasoningModel}>{fetchedModels.map(m => <option key={m} value={m}>{m}</option>)}</select>}
+                                    <input type="text" value={config.api.reasoningModel} onChange={(e) => updateConfig('api', 'reasoningModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-2 px-3 text-xs text-white outline-none font-mono" />
+                                </div>
+                                {/* Image */}
+                                <div>
+                                    <label className="text-[10px] font-medium text-pink-400/70 ml-1 mb-1 block">Image Gen</label>
+                                    {fetchedModels.length > 0 && <select onChange={(e) => updateConfig('api', 'imageModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg py-1 px-2 text-[10px] text-gray-300 mb-1 outline-none" value={config.api.imageModel}>{fetchedModels.map(m => <option key={m} value={m}>{m}</option>)}</select>}
+                                    <input type="text" value={config.api.imageModel} onChange={(e) => updateConfig('api', 'imageModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-2 px-3 text-xs text-white outline-none font-mono" />
+                                </div>
+                                {/* Video */}
+                                <div>
+                                    <label className="text-[10px] font-medium text-cyan-400/70 ml-1 mb-1 block">Video Gen</label>
+                                    {fetchedModels.length > 0 && <select onChange={(e) => updateConfig('api', 'videoModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg py-1 px-2 text-[10px] text-gray-300 mb-1 outline-none" value={config.api.videoModel}>{fetchedModels.map(m => <option key={m} value={m}>{m}</option>)}</select>}
+                                    <input type="text" value={config.api.videoModel} onChange={(e) => updateConfig('api', 'videoModel', e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-xl py-2 px-3 text-xs text-white outline-none font-mono" />
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <h3 className="text-xs font-bold text-indigo-300 uppercase tracking-widest flex items-center gap-2"><Sparkles size={14} /> Neural Engine (Gemini)</h3>
+                            <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-3xl">
+                                <p className="text-xs text-indigo-200/60 mb-4 leading-relaxed">Enables <span className="text-indigo-300 font-medium">Magic Enhance</span> and <span className="text-indigo-300 font-medium">Smart Suggestions</span> powered by Google Gemini Flash.</p>
+                                <input type="password" value={config.gemini.apiKey} onChange={(e) => updateConfig('gemini', 'apiKey', e.target.value)} placeholder="Google AI Studio Key..." className="w-full bg-black/30 border border-indigo-500/20 rounded-xl py-3 px-4 text-sm text-indigo-100 focus:ring-1 focus:ring-indigo-400/50 outline-none font-mono transition-all focus:bg-black/50" />
+                            </div>
+                        </div>
+                        </div>
+                        <div className="p-6 border-t border-white/5 bg-white/5">
+                        <button onClick={() => setShowSettings(false)} className="w-full bg-white text-black font-bold py-4 rounded-[1.25rem] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]">Save Configuration</button>
+                        <p className="text-center text-[10px] text-gray-500/40 mt-4 font-mono tracking-widest uppercase">由 Chenhao Huang 制作</p>
+                        </div>
+                    </div>
+                    </div>
+                )}
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<OmniChat />);
+    </script>
+</body>
+</html>
